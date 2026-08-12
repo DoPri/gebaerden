@@ -25,7 +25,7 @@ Builds:
     prebuild:
       - $$flutter$$/bin/flutter config --no-analytics
       - $$flutter$$/bin/flutter pub get
-      - $$flutter$$/bin/dart run build_runner build --delete-conflicting-outputs
+      - $$flutter$$/bin/dart run build_runner build
     build:
       - $$flutter$$/bin/flutter build apk --release
     novcheck: true

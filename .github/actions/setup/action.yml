@@ -27,5 +27,5 @@ runs:
       shell: bash
 
     - if: inputs.generate == 'true'
-      run: dart run build_runner build --delete-conflicting-outputs
+      run: dart run build_runner build
       shell: bash

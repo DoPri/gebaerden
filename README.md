@@ -27,7 +27,7 @@ gh attestation verify app-arm64-v8a-release.apk --repo DoPri/gebaerden
 
 ```bash
 flutter pub get
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 flutter run
 ```
 

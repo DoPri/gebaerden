@@ -11,6 +11,13 @@ export 'tables.dart';
 
 part 'database.g.dart';
 
+/// Both files sit in web/ and are pinned to the versions in pubspec.lock,
+/// sqlite3.wasm to sqlite3 and drift_worker.js to drift.
+final _web = DriftWebOptions(
+  sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+  driftWorker: Uri.parse('drift_worker.js'),
+);
+
 @DriftDatabase(
   tables: [
     Entries,
@@ -26,13 +33,6 @@ part 'database.g.dart';
     Variants,
   ],
 )
-/// Both files sit in web/ and are pinned to the versions in pubspec.lock,
-/// sqlite3.wasm to sqlite3 and drift_worker.js to drift.
-final _web = DriftWebOptions(
-  sqlite3Wasm: Uri.parse('sqlite3.wasm'),
-  driftWorker: Uri.parse('drift_worker.js'),
-);
-
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'gebaerden', web: _web));
