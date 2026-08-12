@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+# The prefix is written out rather than taken from github.workflow, which
+# resolves to the caller's name when the release workflow reuses this one and
+# would put both runs in the same group.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+
+      - run: dart format --set-exit-if-changed .
+      - run: flutter analyze
+      - run: flutter test --coverage
+      - run: python3 tools/coverage.py 99
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: coverage
+          path: coverage/lcov.info
+          retention-days: 7
+
+  # Gated on check: the release build takes longer than everything above it
+  # and there is nothing to learn from it while the analyzer is red. Skipped
+  # on a tag, where the release workflow builds a signed APK anyway.
+  build:
+    needs: check
+    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: ./.github/actions/setup
+
+      # Without a keystore the APK stays unsigned, only the build counts here.
+      - run: flutter build apk --release --split-per-abi
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: apk
+          path: build/app/outputs/flutter-apk/*-release.apk
+          if-no-files-found: error
+          retention-days: 7

@@ -1,0 +1,4 @@
+tags:
+  # Hits signdict.org. Skip with --exclude-tags live when offline.
+  live:
+    timeout: 2x

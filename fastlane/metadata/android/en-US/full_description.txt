@@ -1,0 +1,26 @@
+DGS Lernen is a plain, ad-free app for learning German Sign Language (DGS). The videos come from the open dictionary SignDict.
+
+Your progress stays on the device and can be exported to a file and moved to another device.
+
+<b>Dictionary</b>
+Search several thousand signs, browse by letter, follow related words and pull up a random sign.
+
+<b>Videos at your pace</b>
+Slow motion down to 0.25x, looping, mirroring for left-handed signers and frame stepping. Copying a sign is hard without slow motion.
+
+<b>Vocabulary trainer</b>
+Spaced repetition using FSRS, the same algorithm Anki uses. Three question types: self rating, four-way multiple choice or typing. You choose the direction: sign to word, word to sign, or both.
+
+<b>Fingerspelling and numbers</b>
+Every handshape from A to Z including umlauts, plus the numbers 0 to 20. In spelling mode the app spells a word character by character and you type what you read.
+
+<b>Your own lists</b>
+Starter topics such as greetings, family or colors, plus your own lists and an "already know" list whose words drop out of the trainer.
+
+<b>Share lists</b>
+Send a list as a file. Anyone with the app taps the attachment and takes it over.
+
+<b>Offline</b>
+Download single words, whole letters or the entire dictionary. Search keeps working without a connection.
+
+The sign videos are not part of this app. They come from SignDict under various Creative Commons licenses. Rights holder and license are shown under every video. This app is not affiliated with SignDict.

@@ -1,0 +1,24 @@
+name: Dependencies
+
+# What is outdated does not change per commit, so this runs on its own clock
+# instead of on every push.
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  outdated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup
+        with:
+          generate: 'false'
+
+      - run: flutter pub outdated

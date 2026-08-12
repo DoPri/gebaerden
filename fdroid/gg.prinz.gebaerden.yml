@@ -1,0 +1,36 @@
+Categories:
+  - Science & Education
+License: GPL-3.0-or-later
+AuthorName: Dominic Prinz
+SourceCode: https://github.com/DoPri/gebaerden
+IssueTracker: https://github.com/DoPri/gebaerden/issues
+Changelog: https://github.com/DoPri/gebaerden/releases
+
+AutoName: DGS Lernen
+
+RepoType: git
+Repo: https://github.com/DoPri/gebaerden.git
+
+Builds:
+  - versionName: 1.0.0
+    versionCode: 1
+    commit: v1.0.0
+    subdir: android/app
+    sudo:
+      - apt-get update
+      - apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev
+    srclibs:
+      - flutter@3.44.9
+    output: build/app/outputs/flutter-apk/app-release.apk
+    prebuild:
+      - $$flutter$$/bin/flutter config --no-analytics
+      - $$flutter$$/bin/flutter pub get
+      - $$flutter$$/bin/dart run build_runner build --delete-conflicting-outputs
+    build:
+      - $$flutter$$/bin/flutter build apk --release
+    novcheck: true
+
+AutoUpdateMode: Version v%v
+UpdateCheckMode: Tags
+CurrentVersion: 1.0.0
+CurrentVersionCode: 1

@@ -1,0 +1,8 @@
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          # Unix seconds would flatten the stagger that keeps bulk list
+          # insertions in order. Text keeps sub-second precision.
+          store_date_time_values_as_text: true

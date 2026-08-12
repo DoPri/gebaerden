@@ -1,0 +1,31 @@
+name: Setup
+description: Flutter toolchain, pub cache and the generated database code.
+
+inputs:
+  generate:
+    description: Run build_runner. Off for jobs that only read pubspec.
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    # The Flutter version lives here alone. Every workflow goes through this
+    # action, so a bump is one line instead of four that can drift apart.
+    - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+      with:
+        flutter-version: 3.44.9
+        channel: stable
+        cache: true
+
+    - uses: actions/cache@v6
+      with:
+        path: ~/.pub-cache
+        key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+        restore-keys: pub-${{ runner.os }}-
+
+    - run: flutter pub get
+      shell: bash
+
+    - if: inputs.generate == 'true'
+      run: dart run build_runner build --delete-conflicting-outputs
+      shell: bash

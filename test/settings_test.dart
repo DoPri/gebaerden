@@ -1,0 +1,88 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:gebaerden/db/database.dart';
+import 'package:gebaerden/settings.dart';
+import 'package:gebaerden/theme.dart';
+
+import 'support.dart';
+
+void main() {
+  late AppDatabase db;
+  late AppSettings settings;
+
+  setUp(() async {
+    db = testDb();
+    settings = AppSettings(db);
+    await settings.load();
+  });
+
+  tearDown(() => db.close());
+
+  test('knows defaults without a stored row', () {
+    expect(settings.themeMode, ThemeMode.system);
+    expect(settings.newPerDay, 20);
+    expect(settings.mode, ReviewMode.self);
+    expect(settings.accent, defaultAccent);
+  });
+
+  test('keeps what was set, across a restart', () async {
+    await settings.set('newPerDay', 7);
+    await settings.setThemeMode(ThemeMode.dark);
+
+    final again = AppSettings(db);
+    await again.load();
+    expect(again.newPerDay, 7);
+    expect(again.themeMode, ThemeMode.dark);
+  });
+
+  test('announces changes', () async {
+    var calls = 0;
+    settings.addListener(() => calls++);
+    await settings.set('mirror', true);
+    expect(calls, 1);
+    expect(settings.mirror, isTrue);
+  });
+
+  test('ignores a value of the wrong type', () async {
+    // Only a foreign file can carry this.
+    await db
+        .into(db.settings)
+        .insertOnConflictUpdate(
+          const StoredSetting(key: 'newPerDay', value: 'many'),
+        );
+
+    final again = AppSettings(db);
+    await again.load();
+    expect(again.newPerDay, 20);
+  });
+
+  test('ignores an unknown key', () async {
+    await db
+        .into(db.settings)
+        .insertOnConflictUpdate(const StoredSetting(key: 'nonsense', value: 1));
+
+    final again = AppSettings(db);
+    await expectLater(again.load(), completes);
+  });
+
+  test('falls back when a stored name matches no enum', () async {
+    // A hand-edited backup passes the type check, the value is still a string.
+    await db.batch(
+      (b) => b.insertAllOnConflictUpdate(db.settings, const [
+        StoredSetting(key: 'mode', value: 'unsinn'),
+        StoredSetting(key: 'direction', value: 'unsinn'),
+      ]),
+    );
+
+    final again = AppSettings(db);
+    await again.load();
+    expect(again.mode, ReviewMode.self);
+    expect(again.direction, DirectionMode.recognition);
+    expect(again.directions, [Direction.recognition]);
+  });
+
+  test('both means two directions', () async {
+    await settings.set('direction', DirectionMode.both.name);
+    expect(settings.directions, [Direction.recognition, Direction.production]);
+  });
+}

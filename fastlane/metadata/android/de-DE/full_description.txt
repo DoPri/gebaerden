@@ -1,0 +1,26 @@
+DGS Lernen ist eine schlichte, werbefreie App zum Lernen der Deutschen Gebärdensprache. Die Videos stammen aus dem offenen Wörterbuch SignDict.
+
+Dein Fortschritt bleibt auf dem Gerät und lässt sich als Datei sichern und auf ein anderes Gerät übertragen.
+
+<b>Wörterbuch</b>
+Suche über mehrere tausend Gebärden, Blättern nach Buchstabe, verwandte Wörter und eine Zufallsgebärde zum Stöbern.
+
+<b>Videos in deinem Tempo</b>
+Zeitlupe bis 0,25-fach, Endlosschleife, Spiegeln für Linkshänder und Einzelbildschritte. Ohne Zeitlupe ist Nachmachen kaum möglich.
+
+<b>Vokabeltrainer</b>
+Verteilte Wiederholung nach FSRS, demselben Verfahren wie in Anki. Drei Abfragearten: Selbstbewertung, Auswahl aus vier Antworten oder Eintippen. Die Richtung wählst du frei zwischen Gebärde nach Wort, Wort nach Gebärde oder beidem.
+
+<b>Fingeralphabet und Zahlen</b>
+Alle Handformen von A bis Z samt Umlauten sowie die Zahlen 0 bis 20. Im Buchstabiermodus zeigt die App ein Wort Zeichen für Zeichen und du tippst, was du gelesen hast.
+
+<b>Eigene Listen</b>
+Themenlisten zum Einstieg wie Begrüßung, Familie oder Farben. Dazu eigene Listen und die Liste "Kenne ich schon", deren Wörter aus dem Trainer verschwinden.
+
+<b>Listen teilen</b>
+Schick eine Liste als Datei an andere. Wer die App hat, tippt den Anhang an und übernimmt sie.
+
+<b>Offline</b>
+Lade einzelne Wörter, ganze Buchstaben oder das komplette Wörterbuch herunter. Die Suche funktioniert danach auch ohne Netz.
+
+Die Gebärdenvideos gehören nicht zu dieser App. Sie stammen von SignDict und stehen unter verschiedenen Creative-Commons-Lizenzen. Rechteinhaber und Lizenz stehen unter jedem Video. Diese App ist kein Angebot von SignDict.

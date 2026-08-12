@@ -1,0 +1,67 @@
+# Only Google Play goes through here. F-Droid builds from the tag itself and
+# reads the same metadata tree on its own, GitHub gets its APKs from the
+# release workflow.
+
+# Absolute, because a lane runs from a working directory that is not promised.
+ROOT = File.expand_path("..", __dir__)
+BUNDLE = File.join(ROOT, "build/app/outputs/bundle/release/app-release.aab")
+METADATA = File.join(ROOT, "fastlane/metadata/android")
+
+opt_out_usage
+
+# supply takes the raw JSON through this option. Passed here rather than in the
+# Appfile, where the key is spelled json_key_data_raw and a wrong name fails
+# only once the variable is actually set.
+#
+# Locally the path comes out of .env, in CI the whole JSON arrives as a secret.
+def service_account
+  path = ENV["PLAY_SERVICE_ACCOUNT_FILE"]
+  return File.read(path) if path && !path.empty?
+
+  ENV["PLAY_SERVICE_ACCOUNT"] ||
+    UI.user_error!(
+      "Neither PLAY_SERVICE_ACCOUNT_FILE nor PLAY_SERVICE_ACCOUNT is set, " \
+      "see RELEASING.md",
+    )
+end
+
+default_platform(:android)
+
+platform :android do
+  desc "Ship the bundle to internal testing and sync the listing"
+  lane :internal do
+    upload_to_play_store(
+      track: "internal",
+      release_status: "completed",
+      aab: BUNDLE,
+      metadata_path: METADATA,
+      json_key_data: service_account,
+      skip_upload_apk: true,
+    )
+  end
+
+  desc "Push texts, icon and screenshots without shipping a build"
+  lane :listing do
+    upload_to_play_store(
+      track: "internal",
+      aab: BUNDLE,
+      metadata_path: METADATA,
+      json_key_data: service_account,
+      skip_upload_aab: true,
+      skip_upload_apk: true,
+    )
+  end
+
+  desc "Resolve the credentials and the listing without uploading anything"
+  lane :check do
+    validate_play_store_json_key(json_key_data: service_account)
+    upload_to_play_store(
+      track: "internal",
+      aab: BUNDLE,
+      metadata_path: METADATA,
+      json_key_data: service_account,
+      skip_upload_apk: true,
+      validate_only: true,
+    )
+  end
+end
