@@ -86,34 +86,9 @@ iOS is built along but unverified, there is no device to test on.
 
 signdict.org answers without an `access-control-allow-origin` header, so a
 browser blocks every call to the API. The web build therefore needs a proxy in
-front of it and takes its address from a define:
+front of it. Also, the web version does not have download capabilities.
 
-```bash
-python3 tools/web_assets.py
-python3 tools/proxy.py &
-flutter run -d chrome --dart-define=api=http://localhost:8080/graphql-api
-flutter build web --release --no-web-resources-cdn \
-    --dart-define=api=http://localhost:8080/graphql-api
-```
-
-Without the define the app talks to signdict.org directly, which is what the
-Android and iOS builds do. Without `--no-web-resources-cdn` the page pulls
-CanvasKit off gstatic instead of out of its own build.
-
-`tools/web_assets.py` writes everything the browser loads at runtime and takes
-the versions out of `pubspec.lock` and out of the installed SDK, so nothing
-can fall behind. `drift_worker.js` is a copy out of the drift package,
-`sqlite3.wasm` comes from the release of the `sqlite3` version in the lock
-file. The two font files under `web/fonts/` are the ones CanvasKit would
-otherwise fetch from fonts.gstatic.com on every start, Roboto and the symbols
-face for the arrow in the trainer, mirrored under the exact path the engine
-asks for. `web/flutter_bootstrap.js` points the engine at that copy. All of it
-is generated and not in the repository, the way `build_runner` output is not.
-
-Offline downloads are missing in the browser. `background_downloader` has no
-web implementation, so `lib/packages/manager.dart` hands the web build an empty
-queue and the offline section under Mehr is not shown. Everything else is
-there: dictionary, videos, trainer, fingerspelling, lists and the backup.
+See the "Container" section below for a quickstart.
 
 ## Container
 
@@ -139,28 +114,6 @@ and building it here instead is
 
 ```bash
 docker compose up -d --build
-```
-
-nginx listens on 8080 as uid 101 and speaks plain HTTP, there is a reverse
-proxy in front for TLS. The app and the API share one origin, `/api` goes to
-signdict.org, and that is what makes the CORS question disappear. The upstream
-can be moved with `-e API_UPSTREAM=...`, the client address is read from
-`X-Forwarded-For`, and `/healthz` answers for a health check.
-
-Nothing is fetched from anywhere else at runtime. CanvasKit, the drift worker,
-sqlite3 and the two fonts all sit in the image, and the
-`Content-Security-Policy` says `self`, so a stray request would be refused
-rather than sent.
-
-`compose.yaml` runs it with a read-only root filesystem, without capabilities
-and bound to the loopback, since the proxy in front is what faces the world.
-The same by hand:
-
-```bash
-docker run --read-only --tmpfs /tmp \
-    --tmpfs /var/cache/nginx:rw,mode=777 \
-    --tmpfs /etc/nginx/conf.d:rw,mode=777 \
-    -p 127.0.0.1:8080:8080 dgs-lernen
 ```
 
 ## Decisions
