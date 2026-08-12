@@ -35,10 +35,13 @@ class AppSettings extends ChangeNotifier {
   Future<void> load() async {
     for (final row in await _db.select(_db.settings).get()) {
       final fallback = _defaults[row.key];
-      // An imported file could carry anything.
-      if (fallback != null && row.value.runtimeType == fallback.runtimeType) {
-        _values[row.key] = row.value;
-      }
+      final value = row.value;
+      if (fallback == null) continue;
+
+      final fits = fallback is num
+          ? value is num
+          : value.runtimeType == fallback.runtimeType;
+      if (fits) _values[row.key] = value;
     }
   }
 
@@ -52,6 +55,12 @@ class AppSettings extends ChangeNotifier {
 
   T _read<T>(String key) => _values[key] as T;
 
+  /// Numbers go through num. What arrives depends on the platform and on what
+  /// an imported file carried, 7 and 7.0 mean the same thing.
+  int _whole(String key) => (_values[key]! as num).toInt();
+
+  double _decimal(String key) => (_values[key]! as num).toDouble();
+
   ThemeMode get themeMode => switch (_read<String>('themeMode')) {
     'light' => ThemeMode.light,
     'dark' => ThemeMode.dark,
@@ -60,15 +69,15 @@ class AppSettings extends ChangeNotifier {
 
   Future<void> setThemeMode(ThemeMode mode) => set('themeMode', mode.name);
 
-  int get accent => _read<int>('accent');
+  int get accent => _whole('accent');
 
   Future<void> setAccent(int value) => set('accent', value);
 
-  double get speed => _read<double>('speed');
+  double get speed => _decimal('speed');
   bool get loop => _read<bool>('loop');
   bool get mirror => _read<bool>('mirror');
-  int get newPerDay => _read<int>('newPerDay');
-  int get reviewPerDay => _read<int>('reviewPerDay');
+  int get newPerDay => _whole('newPerDay');
+  int get reviewPerDay => _whole('reviewPerDay');
   bool get showWithoutVideo => _read<bool>('showWithoutVideo');
 
   /// An imported file passes the type check with any string, so fall back

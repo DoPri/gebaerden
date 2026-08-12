@@ -113,7 +113,6 @@ doc/api/
 .pub-cache/
 .pub/
 coverage/
-lib/generated_plugin_registrant.dart
 # For library packages, don’t commit the pubspec.lock file.
 # Regenerating the pubspec.lock file lets you test your package against the latest compatible versions of its dependencies.
 # See https://dart.dev/guides/libraries/private-files#pubspeclock
@@ -343,3 +342,8 @@ fabric.properties
 !/gradle/wrapper/gradle-wrapper.jar
 
 # End of https://www.toptal.com/developers/gitignore/api/dart,flutter,android,fastlane,ruby,androidstudio
+
+# Written by tools/web_assets.py from the versions in pubspec.lock.
+web/drift_worker.js
+web/fonts/
+web/sqlite3.wasm

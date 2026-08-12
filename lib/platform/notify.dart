@@ -7,9 +7,12 @@ import 'package:timezone/timezone.dart' as tz;
 final _plugin = FlutterLocalNotificationsPlugin();
 
 /// The same check the plugin runs, anywhere else it has no implementation.
+/// A browser on a phone reports android or iOS as well, and the plugins behind
+/// this would answer with a missing implementation before the app is even up.
 bool get _supported =>
-    defaultTargetPlatform == TargetPlatform.android ||
-    defaultTargetPlatform == TargetPlatform.iOS;
+    !kIsWeb &&
+    (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS);
 
 const weekdayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 

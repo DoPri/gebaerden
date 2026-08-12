@@ -4,6 +4,7 @@ import 'package:video_player/video_player.dart';
 import '../../db/database.dart';
 import '../../media/license.dart';
 import '../../media/media.dart';
+import '../../platform/local.dart';
 import '../../settings.dart';
 import '../../theme.dart';
 import 'pieces.dart';
@@ -80,7 +81,7 @@ class _SignVideoState extends State<SignVideo> {
     if (source == null) return _giveUp(wanted, old, poster);
 
     final next = source.isFile
-        ? VideoPlayerController.file(source.file)
+        ? localVideo(source.path!)
         : VideoPlayerController.networkUrl(Uri.parse(source.url!));
 
     try {
@@ -202,11 +203,15 @@ class _Poster extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (source) {
-      MediaSource(isFile: true, :final file) => Image.file(
-        file,
+      MediaSource(isFile: true, :final path?) => Image(
+        image: localImage(path),
         fit: BoxFit.contain,
       ),
-      MediaSource(:final url?) => Image.network(url, fit: BoxFit.contain),
+      MediaSource(:final url?) => Image.network(
+        url,
+        fit: BoxFit.contain,
+        webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+      ),
       _ => const SizedBox.shrink(),
     };
   }

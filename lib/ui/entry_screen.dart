@@ -159,7 +159,7 @@ class _EntryScreenState extends State<EntryScreen> {
                 ),
               ),
             ],
-            if (entry.hasVideo) ...[
+            if (entry.hasVideo && downloadsAvailable) ...[
               const HairLine(),
               Padding(
                 padding: const EdgeInsets.all(16),

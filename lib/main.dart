@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -117,6 +118,9 @@ class _GebaerdenAppState extends State<GebaerdenApp>
   }
 
   void _listenForSharedFiles() {
+    // receive_sharing_intent has no web implementation, its channel would
+    // throw. Nothing hands a file to a browser tab anyway.
+    if (kIsWeb) return;
     _shared = ReceiveSharingIntent.instance.getMediaStream().listen(
       _openShared,
     );

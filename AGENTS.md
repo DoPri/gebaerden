@@ -181,12 +181,11 @@ brightnesses, for the suggested colors and for extremes like white and yellow.
   test, watch it go red.
 - Test names are lowercase English sentences: `a paused row keeps its counts`.
 - `test/` runs without network and without a device. `integration_test/` runs
-  on a device, needs `-d <device>`, and splits in two. `app_test.dart` goes
-  against signdict.org and checks that the API still returns what the app
-  expects. `learn_test.dart` drives the trainer through the real shell off
-  seeded rows, no network. The reminder case needs
-  `adb shell pm grant gg.prinz.gebaerden android.permission.POST_NOTIFICATIONS`
-  while the run is up.
+  on a device through `tools/integration.sh`, which picks the device and
+  grants `POST_NOTIFICATIONS` while the run is up, since the reminder cases
+  fail without it. `app_test.dart` goes against signdict.org and checks that
+  the API still returns what the app expects. `learn_test.dart` and
+  `lists_test.dart` drive the real shell off seeded rows, no network.
 - Widget tests use the fake clock. Real file and network work needs
   `tester.runAsync`, followed by `drain(tester)` so no timers stay pending.
   The platform channels live in `test/channels.dart`, the video player in
@@ -223,6 +222,19 @@ it. Without an explicit `SystemUiOverlayStyle` the system enforces its own
 contrast, and under three-button navigation that lays a dark band over the
 light theme. Gesture navigation hides the whole problem, so it has to be
 checked with `cmd overlay enable com.android.internal.systemui.navbar.threebutton`.
+
+dart2js knows one number type. `1.0.runtimeType` is `int` in a browser and
+`double` on a device, so comparing a stored value against a default by
+`runtimeType` dropped the playback speed on every web start, and reading it
+back with `as int` turned 0.5 into 0. Numbers out of storage are checked as
+`num` and converted where they are read.
+
+CanvasKit fetches image bytes and decodes them itself, so `Image.network`
+needs CORS where a `<video>` element does not. assets.wishlephant.com sends no
+`access-control-allow-origin`, which left every thumbnail in the web build on
+its errorBuilder while the clips played. `webHtmlElementStrategy:
+WebHtmlElementStrategy.fallback` puts an img element behind the fetch, and that
+one needs no header.
 
 Dart does time arithmetic on instants. `subtract(Duration(days: 1))` subtracts
 exactly 24 hours and lands next to midnight across a daylight saving change.

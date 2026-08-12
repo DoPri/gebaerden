@@ -1,15 +1,14 @@
-import 'dart:io';
-
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:go_router/go_router.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../db/database.dart';
 import '../db/recent.dart';
+import '../packages/manager.dart';
 import '../platform/files.dart';
+import '../platform/local.dart';
 import '../search/dictionary.dart';
 import '../settings.dart';
 import '../srs/scheduler.dart';
@@ -68,10 +67,13 @@ class _MoreScreenState extends State<MoreScreen> {
         StatsPanel(db: widget.db),
         const SizedBox(height: 24),
 
-        const SectionLabel('Offline'),
-        const SizedBox(height: 8),
-        _OfflineLink(db: widget.db),
-        const SizedBox(height: 24),
+        // Without a queue the section would lead nowhere.
+        if (downloadsAvailable) ...[
+          const SectionLabel('Offline'),
+          const SizedBox(height: 8),
+          _OfflineLink(db: widget.db),
+          const SizedBox(height: 24),
+        ],
 
         const SectionLabel('Darstellung'),
         const SizedBox(height: 8),
@@ -462,11 +464,9 @@ class _BackupState extends State<_Backup> {
     setState(() => _busy = true);
     try {
       final text = await exportBackup(widget.db, sections: choice.sections);
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/${backupFileName(DateTime.now())}');
-      await file.writeAsString(text);
+      final file = await textFile(backupFileName(DateTime.now()), text);
       await SharePlus.instance.share(
-        ShareParams(files: [XFile(file.path)], subject: 'DGS Lernen Sicherung'),
+        ShareParams(files: [file], subject: 'DGS Lernen Sicherung'),
       );
     } on Exception {
       if (mounted) {

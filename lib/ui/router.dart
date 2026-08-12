@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../db/database.dart';
+import '../packages/manager.dart';
 import '../srs/charset.dart';
 import 'charset_screen.dart';
 import 'dictionary_screen.dart';
@@ -41,11 +42,14 @@ GoRouter buildRouter(AppDatabase db) {
         path: '/neu',
         builder: (_, _) => NewestScreen(db: db),
       ),
-      GoRoute(
-        parentNavigatorKey: rootKey,
-        path: '/offline',
-        builder: (_, _) => OfflineScreen(db: db),
-      ),
+      // On the web the address bar is a way in of its own, and the screen
+      // would offer packages that no queue picks up.
+      if (downloadsAvailable)
+        GoRoute(
+          parentNavigatorKey: rootKey,
+          path: '/offline',
+          builder: (_, _) => OfflineScreen(db: db),
+        ),
       GoRoute(
         parentNavigatorKey: rootKey,
         path: '/fingeralphabet',

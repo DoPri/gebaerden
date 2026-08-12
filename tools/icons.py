@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Renders the icon sources into every Android, iOS and store size.
+"""Renders the icon sources into every Android, iOS, web and store size.
 
 icon-store.svg carries the DGS lettering and is used wherever the letters still
 read. icon.svg is the bare hand for the sizes below that.
@@ -15,6 +15,7 @@ ICON = ROOT / "assets" / "icon.svg"
 STORE = ROOT / "assets" / "icon-store.svg"
 RES = ROOT / "android" / "app" / "src" / "main" / "res"
 APPICON = ROOT / "ios" / "Runner" / "Assets.xcassets" / "AppIcon.appiconset"
+WEB = ROOT / "web"
 TMP = ROOT / "assets" / ".render.png"
 
 # Adaptive icons reserve the outer third for masking, so the artwork stays small.
@@ -76,6 +77,12 @@ def main() -> None:
         images = ROOT / "fastlane/metadata/android" / locale / "images"
         square(512, 0.68, images / "icon.png", BACKGROUND)
         feature_graphic(images / "featureGraphic.png")
+
+    for box in (192, 512):
+        square(box, 0.68, WEB / "icons" / f"Icon-{box}.png", BACKGROUND)
+        # A maskable icon is cropped, so the artwork stays in the safe zone.
+        square(box, 0.58, WEB / "icons" / f"Icon-maskable-{box}.png", BACKGROUND)
+    square(32, 0.8, WEB / "favicon.png", BACKGROUND)
 
     TMP.unlink(missing_ok=True)
     print("icons written")

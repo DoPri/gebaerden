@@ -4,7 +4,12 @@ import 'dart:math';
 
 import 'package:http/http.dart' as http;
 
-const endpoint = 'https://signdict.org/graphql-api';
+/// signdict.org sends no CORS header, so a browser cannot call it directly.
+/// The web build is pointed at a proxy with --dart-define=api=...
+const endpoint = String.fromEnvironment(
+  'api',
+  defaultValue: 'https://signdict.org/graphql-api',
+);
 
 /// signdict.org is volunteer-run.
 const _maxConcurrent = 4;

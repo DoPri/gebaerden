@@ -30,6 +30,22 @@ void main() {
       expect(find.text('Neu'), findsOneWidget);
     });
 
+    testWidgets('a letter stays a small tile on a wide window', (tester) async {
+      // Six columns fixed meant one letter per fifth of a desktop window.
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(await harness(db, DictionaryScreen(db: db)));
+      await tester.pumpAndSettle();
+
+      final tile = tester.getSize(
+        find.ancestor(of: find.text('A'), matching: find.byType(InkWell)).first,
+      );
+      expect(tile.width, lessThanOrEqualTo(72));
+      expect(tile.height, greaterThanOrEqualTo(40));
+    });
+
     testWidgets('without history there is no recent section', (tester) async {
       await tester.pumpWidget(await harness(db, DictionaryScreen(db: db)));
       await tester.pumpAndSettle();

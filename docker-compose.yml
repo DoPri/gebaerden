@@ -1,0 +1,23 @@
+services:
+  app:
+    image: ghcr.io/dopri/gebaerden:latest
+    build: .
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    environment:
+      API_UPSTREAM: https://signdict.org/graphql-api
+
+    read_only: true
+    # Mode 777 since it runs as uid 101
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx:rw,mode=777
+      - /etc/nginx/conf.d:rw,mode=777
+
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true

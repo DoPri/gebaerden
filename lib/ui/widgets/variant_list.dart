@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../db/database.dart';
 import '../../media/license.dart';
 import '../../media/media.dart';
+import '../../platform/local.dart';
 import '../../theme.dart';
 import '../../util/time.dart';
 import 'pieces.dart';
@@ -118,14 +119,15 @@ class _Variant extends StatelessWidget {
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: switch (thumb) {
-                  MediaSource(isFile: true, :final file) => Image.file(
-                    file,
+                  MediaSource(isFile: true, :final path?) => Image(
+                    image: localImage(path),
                     fit: BoxFit.cover,
                     errorBuilder: (_, _, _) => const SizedBox.shrink(),
                   ),
                   MediaSource(:final url?) => Image.network(
                     url,
                     fit: BoxFit.cover,
+                    webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
                     errorBuilder: (_, _, _) => const SizedBox.shrink(),
                   ),
                   _ => const SizedBox.shrink(),

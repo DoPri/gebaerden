@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../db/database.dart';
 import '../../media/media.dart';
+import '../../platform/local.dart';
 import '../../theme.dart';
 import 'pieces.dart';
 
@@ -90,8 +91,8 @@ class _Thumb extends StatelessWidget {
         alignment: Alignment.center,
         child: switch (source) {
           // Some thumbnails 404 upstream.
-          MediaSource(isFile: true, :final file) => Image.file(
-            file,
+          MediaSource(isFile: true, :final path?) => Image(
+            image: localImage(path),
             fit: BoxFit.cover,
             width: 64,
             height: 48,
@@ -102,6 +103,7 @@ class _Thumb extends StatelessWidget {
             fit: BoxFit.cover,
             width: 64,
             height: 48,
+            webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
             errorBuilder: (_, _, _) => placeholder,
           ),
           _ => placeholder,

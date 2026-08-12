@@ -324,8 +324,8 @@ class _Start extends StatelessWidget {
 
         const SectionLabel('Nach Buchstabe'),
         const SizedBox(height: 12),
-        GridView.count(
-          crossAxisCount: 6,
+        GridView.extent(
+          maxCrossAxisExtent: 72,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 6,

@@ -1,17 +1,16 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:drift/drift.dart' show TableUpdateQuery;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../db/database.dart';
 import '../db/lists.dart';
 import '../db/repo.dart';
 import '../platform/files.dart';
+import '../platform/local.dart';
 import '../theme.dart';
 import '../topics.dart';
 import '../transfer/list_file.dart';
@@ -279,8 +278,7 @@ Future<void> openSharedPath(
   AppDatabase db,
   String path,
 ) async {
-  final file = File(path);
-  if (!file.existsSync()) return;
+  if (!localExists(path)) return;
   final text = await readText(XFile(path));
   if (!context.mounted) return;
   await receiveListFile(context, db, text);
@@ -289,12 +287,10 @@ Future<void> openSharedPath(
 /// Writes the file to the cache and hands it to the system share sheet.
 Future<void> shareList(AppDatabase db, StoredList list) async {
   final text = await encodeList(db, list);
-  final dir = await getTemporaryDirectory();
-  final file = File('${dir.path}/${listFileName(list.name)}');
-  await file.writeAsString(text);
+  final file = await textFile(listFileName(list.name), text);
 
   await SharePlus.instance.share(
-    ShareParams(files: [XFile(file.path)], subject: list.name),
+    ShareParams(files: [file], subject: list.name),
   );
 }
 

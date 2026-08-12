@@ -35,6 +35,50 @@ void main() {
     expect(again.themeMode, ThemeMode.dark);
   });
 
+  test('the playback speed comes back after a restart', () async {
+    await settings.set('speed', 0.25);
+
+    final again = AppSettings(db);
+    await again.load();
+    expect(again.speed, 0.25);
+  });
+
+  test('a whole number for a decimal setting is taken as one', () async {
+    // The browser has one number type, so a stored 1.0 arrives as an int and
+    // an import can carry either. Both mean the same speed.
+    await db
+        .into(db.settings)
+        .insertOnConflictUpdate(const StoredSetting(key: 'speed', value: 2));
+
+    final again = AppSettings(db);
+    await again.load();
+    expect(again.speed, 2.0);
+  });
+
+  test('a decimal for a whole setting is taken as one', () async {
+    await db
+        .into(db.settings)
+        .insertOnConflictUpdate(
+          const StoredSetting(key: 'newPerDay', value: 7.0),
+        );
+
+    final again = AppSettings(db);
+    await again.load();
+    expect(again.newPerDay, 7);
+  });
+
+  test('a value of the wrong kind is left alone', () async {
+    await db
+        .into(db.settings)
+        .insertOnConflictUpdate(
+          const StoredSetting(key: 'speed', value: 'schnell'),
+        );
+
+    final again = AppSettings(db);
+    await again.load();
+    expect(again.speed, 1.0);
+  });
+
   test('announces changes', () async {
     var calls = 0;
     settings.addListener(() => calls++);

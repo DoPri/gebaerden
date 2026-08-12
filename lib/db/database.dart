@@ -26,13 +26,20 @@ part 'database.g.dart';
     Variants,
   ],
 )
+/// Both files sit in web/ and are pinned to the versions in pubspec.lock,
+/// sqlite3.wasm to sqlite3 and drift_worker.js to drift.
+final _web = DriftWebOptions(
+  sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+  driftWorker: Uri.parse('drift_worker.js'),
+);
+
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
-    : super(executor ?? driftDatabase(name: 'gebaerden'));
+    : super(executor ?? driftDatabase(name: 'gebaerden', web: _web));
 
   /// A throwaway database on the device, so a test run leaves nothing behind.
   factory AppDatabase.forTesting() =>
-      AppDatabase(driftDatabase(name: 'gebaerden_test'));
+      AppDatabase(driftDatabase(name: 'gebaerden_test', web: _web));
 
   @override
   int get schemaVersion => 3;

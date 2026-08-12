@@ -1,0 +1,24 @@
+# Nothing signing related ever goes into a build context.
+*.jks
+*.keystore
+.env
+key.json
+
+.dart_tool/
+.git/
+.github/
+.idea/
+.omo/
+android/
+build/
+coverage/
+docs/
+fastlane/
+integration_test/
+ios/
+test/
+test_driver/
+vendor/
+web/drift_worker.js
+web/fonts/
+web/sqlite3.wasm

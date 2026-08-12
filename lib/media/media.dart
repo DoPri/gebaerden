@@ -1,8 +1,7 @@
-import 'dart:io';
-
 import 'package:drift/drift.dart';
 
 import '../db/database.dart';
+import '../platform/local.dart';
 import 'variants.dart';
 
 /// A downloaded copy wins over the CDN.
@@ -14,8 +13,6 @@ class MediaSource {
   final String? url;
 
   bool get isFile => path != null;
-
-  File get file => File(path!);
 }
 
 Future<Map<int, String>> _localPaths(
@@ -40,7 +37,7 @@ Future<MediaSource?> resolveMedia(
 
   final local = (await _localPaths(db, [video.id], kind))[video.id];
   // A row can outlive the file.
-  if (local != null && File(local).existsSync()) return MediaSource.file(local);
+  if (local != null && localExists(local)) return MediaSource.file(local);
 
   return remote == null ? null : MediaSource.network(remote);
 }
@@ -65,7 +62,7 @@ Future<Map<int, MediaSource>> thumbnailsFor(
     if (video == null) continue;
 
     final path = local[video.id];
-    if (path != null && File(path).existsSync()) {
+    if (path != null && localExists(path)) {
       sources[entry.id] = MediaSource.file(path);
     } else if (video.thumbnailUrl != null) {
       sources[entry.id] = MediaSource.network(video.thumbnailUrl!);
