@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -101,6 +102,37 @@ void main() {
       await drain(tester);
     });
 
+    testWidgets('a damaged section is named after the picker', (tester) async {
+      // The picker only reads which sections are there. What is inside them
+      // falls apart one step later, with the dialog already gone.
+      final file = File('${tmp.path}/kaputt.json')
+        ..writeAsStringSync(
+          jsonEncode({
+            'schema': backupSchema,
+            'cards': [
+              {'id': 'x'},
+            ],
+          }),
+        );
+      channels.pick = file.path;
+      await open(tester, find.text('Importieren'));
+
+      await tester.runAsync(() async {
+        await tester.tap(find.text('Importieren'));
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+      });
+      await tester.pumpAndSettle();
+      await tester.runAsync(() async {
+        await tester.tap(find.text('Importieren').last);
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+      });
+      await tester.pumpAndSettle();
+
+      expect(find.text('Der Abschnitt cards ist beschädigt.'), findsOneWidget);
+      expect(await db.select(db.cards).get(), isEmpty);
+      await drain(tester);
+    });
+
     testWidgets('without net the words are named as missing', (tester) async {
       final source = testDb();
       addTearDown(source.close);
@@ -134,6 +166,38 @@ void main() {
         find.textContaining('sobald eine Internetverbindung besteht'),
         findsOneWidget,
       );
+      await drain(tester);
+    });
+  });
+
+  group('the offline link', () {
+    testWidgets('says nothing is stored on an empty device', (tester) async {
+      await open(tester, find.text('Gebärden herunterladen'));
+
+      expect(find.text('Nichts gespeichert'), findsOneWidget);
+      await drain(tester);
+    });
+
+    testWidgets('counts the words and their size', (tester) async {
+      for (final kind in AssetKind.values) {
+        await db
+            .into(db.assets)
+            .insert(
+              StoredAsset(
+                videoId: sampleVideo.id,
+                kind: kind,
+                entryId: 1,
+                localPath: '/tmp/951.${kind.name}',
+                bytes: 1024 * 1024,
+                downloadedAt: DateTime.now(),
+              ),
+            );
+      }
+
+      await open(tester, find.text('Gebärden herunterladen'));
+
+      // One word, both of its files.
+      expect(find.text('1 Gebärde, 2.0 MB'), findsOneWidget);
       await drain(tester);
     });
   });

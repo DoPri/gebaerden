@@ -71,7 +71,7 @@ void main() {
   });
 
   group('spellable words', () {
-    test('only what the set can spell, and only short words', () async {
+    test('only what the set can spell and only short words', () async {
       final set = await handshapes(['h', 'a', 'u', 's', 'm']);
       await cacheEntries(db, [
         sampleEntry(id: 1, text: 'Haus', currentVideo: sampleVideo),

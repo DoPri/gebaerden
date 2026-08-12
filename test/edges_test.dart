@@ -188,7 +188,7 @@ void main() {
   });
 
   testWidgets('a backup that is not even text says so', (tester) async {
-    // Half a utf-8 sequence. The decoder replaces it, and the JSON parser is
+    // Half a utf-8 sequence. The decoder replaces it and the JSON parser is
     // the one who complains, with a friendly message.
     final file = File('${tmp.path}/kaputt.json')
       ..writeAsBytesSync([0x7b, 0xc3]);

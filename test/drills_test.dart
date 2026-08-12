@@ -294,7 +294,7 @@ void main() {
       await tester.pumpWidget(await harness(db, ListsScreen(db: db)));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Begrüßung').last);
-      // Three retries with backoff pass before the error surfaces, and the
+      // Three retries with backoff pass before the error surfaces and the
       // snackbar only stays for four seconds, so do not pump much further.
       await settle(tester, steps: 8);
 

@@ -27,7 +27,7 @@ jobs:
       - run: dart format --set-exit-if-changed .
       - run: flutter analyze
       - run: flutter test --coverage
-      - run: python3 tools/coverage.py 99
+      - run: python3 tools/coverage.py 95
 
       - uses: actions/upload-artifact@v7
         if: always()

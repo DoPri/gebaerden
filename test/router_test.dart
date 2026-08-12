@@ -36,7 +36,7 @@ void main() {
     downloads = Downloads(db);
     router = buildRouter(db);
     // The app widget walks the index on the first start. An empty index ends
-    // that walk at once. A failing one would be retried after a backoff, and
+    // that walk at once. A failing one would be retried after a backoff and
     // that timer outlives the tree these tests tear down.
     stubApi({'index': <Object>[]});
   });

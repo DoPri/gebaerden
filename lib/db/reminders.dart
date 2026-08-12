@@ -88,10 +88,6 @@ Future<void> removeReminder(AppDatabase db, int id) async {
   await (db.delete(db.reminders)..where((t) => t.id.equals(id))).go();
 }
 
-Future<void> removeRemindersOf(AppDatabase db, String listId) async {
-  await (db.delete(db.reminders)..where((t) => t.listId.equals(listId))).go();
-}
-
 /// Every reminder with the count of its own list, which is what the text says.
 /// Counted once per list, several reminders on one list share the number.
 Future<List<DueReminder>> dueReminders(

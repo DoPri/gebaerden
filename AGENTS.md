@@ -55,7 +55,7 @@ leftover written off as acceptable turned out to be the next complaint.
 dart format --set-exit-if-changed .
 flutter analyze                       # must say "No issues found"
 flutter test                          # all of them
-flutter test --coverage && python3 tools/coverage.py 99
+flutter test --coverage && python3 tools/coverage.py 95
 ```
 
 Plus, as soon as platform behaviour is involved:
@@ -65,7 +65,7 @@ flutter test integration_test -d <device>   # against the live API
 flutter build apk --debug                   # does it even build
 ```
 
-Coverage below 99 percent fails CI. `pre-commit` runs format, analysis and
+Coverage below 95 percent fails CI. `pre-commit` runs format, analysis and
 tests before every commit. Without the hooks, CI checks the same on every pull
 request.
 

@@ -73,6 +73,33 @@ void main() {
     expect(find.byType(VideoPlayer), findsOneWidget);
   });
 
+  testWidgets('a clip that arrives after the word changed is dropped', (
+    tester,
+  ) async {
+    const next = ApiVideo(
+      id: 952,
+      videoUrl: 'https://assets.wishlephant.com/signdict/videos/y.mp4',
+    );
+    // Both clips are opening at once, the first one is already stale.
+    player.hold = true;
+    await open(tester);
+    await open(tester, video: next);
+    player.release();
+    // Cancelling the event subscription only finishes on the real clock and
+    // the player is not disposed before it does.
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(player.opened.map((d) => d.uri), [
+      sampleVideo.videoUrl,
+      next.videoUrl,
+    ]);
+    expect(player.calls.where((c) => c == 'dispose'), hasLength(1));
+    expect(find.byType(VideoPlayer), findsOneWidget);
+  });
+
   testWidgets('a stored file is played instead of the url', (tester) async {
     final file = File('${tmp.path}/951.mp4')..writeAsStringSync('x');
     await cacheEntries(db, [

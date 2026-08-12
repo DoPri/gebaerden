@@ -57,7 +57,7 @@ void main() {
   });
 
   test('the trainer counts the corpus once it is there', () async {
-    // The whole bug: the deck is drawn from the entry cache, and nothing ever
+    // The whole bug: the deck is drawn from the entry cache and nothing ever
     // filled it, so a fresh install opened Lernen on zero and zero.
     expect((await buildDeck(db)).newCount, 0);
 

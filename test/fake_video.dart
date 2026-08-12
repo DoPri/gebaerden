@@ -14,6 +14,20 @@ class FakeVideoPlayer extends VideoPlayerPlatform {
   /// Set before pumping to make the platform report a broken file.
   var broken = false;
 
+  /// Keeps every player from reporting itself as initialized until [release],
+  /// so a test can act while a clip is still opening.
+  var hold = false;
+  final _held = <void Function()>[];
+
+  /// Lets the held players report in.
+  void release() {
+    hold = false;
+    for (final report in _held.toList()) {
+      report();
+    }
+    _held.clear();
+  }
+
   var duration = const Duration(seconds: 2);
   var _next = 0;
   final _events = <int, StreamController<VideoEvent>>{};
@@ -43,17 +57,25 @@ class FakeVideoPlayer extends VideoPlayerPlatform {
     // cancel only returns once the inner stream ends. dispose is what closes
     // the controller, which close_sinks cannot follow, so it never goes
     // through a local of its own.
+    void report() {
+      if (_events[id]?.isClosed ?? true) return;
+      _events[id]?.add(
+        VideoEvent(
+          eventType: VideoEventType.initialized,
+          duration: duration,
+          // Wide and short, so the controls fit the test viewport.
+          size: const Size(640, 240),
+        ),
+      );
+    }
+
     _events[id] = StreamController<VideoEvent>.broadcast()
       ..onListen = () => scheduleMicrotask(() {
-        if (_events[id]?.isClosed ?? true) return;
-        _events[id]?.add(
-          VideoEvent(
-            eventType: VideoEventType.initialized,
-            duration: duration,
-            // Wide and short, so the controls fit the test viewport.
-            size: const Size(640, 240),
-          ),
-        );
+        if (hold) {
+          _held.add(report);
+          return;
+        }
+        report();
       });
     _positions[id] = Duration.zero;
     return id;

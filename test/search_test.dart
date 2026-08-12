@@ -60,7 +60,7 @@ void main() {
     });
 
     test('forgives two swapped letters', () async {
-      // The most common typo of all, and it costs two plain edits.
+      // The most common typo of all and it costs two plain edits.
       expect(
         (await offlineSearch(db, 'Huas')).map((e) => e.word),
         contains('Haus'),

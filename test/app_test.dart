@@ -44,7 +44,7 @@ void main() {
     await settings.load();
     await initNotifications();
     // The app widget walks the index on the first start. An empty index ends
-    // that walk at once. A failing one would be retried after a backoff, and
+    // that walk at once. A failing one would be retried after a backoff and
     // that timer outlives the tree these tests tear down.
     stubApi({'index': <Object>[]});
   });
@@ -138,6 +138,23 @@ void main() {
 
     expect(find.text('Begrüßung'), findsOneWidget);
     expect(find.textContaining('Als neue Liste übernehmen?'), findsOneWidget);
+    await drain(tester);
+  });
+
+  testWidgets('a tap on a reminder opens the trainer of its list', (
+    tester,
+  ) async {
+    final list = await createList(db, 'Küche');
+    await boot(tester);
+
+    // What the notification hands over once the app is up.
+    reminderTapHandler!(list.id);
+    // The hop waits for the next frame and nothing else asks for one here.
+    tester.binding.scheduleFrame();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Alle Wörter'), findsOneWidget);
+    expect(find.text('Küche'), findsWidgets);
     await drain(tester);
   });
 

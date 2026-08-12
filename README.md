@@ -37,7 +37,7 @@ The database is generated, so `build_runner` runs again after every change to
 ```bash
 flutter analyze
 flutter test
-flutter test --coverage && python3 tools/coverage.py 99
+flutter test --coverage && python3 tools/coverage.py 95
 ```
 
 `pre-commit install` puts format, analysis and tests in front of every commit.

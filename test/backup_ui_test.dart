@@ -140,6 +140,73 @@ void main() {
     await drain(tester);
   });
 
+  testWidgets('a section left unticked is not imported', (tester) async {
+    final source = testDb();
+    addTearDown(source.close);
+    await cacheEntries(source, [
+      sampleEntry(id: 1, text: 'Hallo', currentVideo: sampleVideo),
+    ]);
+    await gradeCard(
+      source,
+      await getOrCreateCard(source, 1, Direction.recognition),
+      f.Rating.good,
+    );
+    await createList(source, 'Küche');
+
+    final file = File('${tmp.path}/sicherung.json')
+      ..writeAsStringSync(await exportBackup(source));
+    channels.pick = file.path;
+
+    await open(tester);
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Importieren'));
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+    });
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Lernstand und Verlauf'));
+    await tester.pumpAndSettle();
+    // Off and on again, only what stays unticked is left out.
+    await tester.tap(find.text('Listen und Wörter'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Listen und Wörter'));
+    await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Importieren').last);
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+    });
+    await tester.pumpAndSettle();
+
+    expect(await db.select(db.cards).get(), isEmpty);
+    expect((await allLists(db)).map((l) => l.name), contains('Küche'));
+    await drain(tester);
+  });
+
+  testWidgets('backing out of the section picker changes nothing', (
+    tester,
+  ) async {
+    final source = testDb();
+    addTearDown(source.close);
+    await createList(source, 'Küche');
+
+    final file = File('${tmp.path}/sicherung.json')
+      ..writeAsStringSync(await exportBackup(source));
+    channels.pick = file.path;
+
+    await open(tester);
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Importieren'));
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+    });
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Abbrechen'));
+    await tester.pumpAndSettle();
+
+    expect((await allLists(db)).map((l) => l.name), isNot(contains('Küche')));
+    await drain(tester);
+  });
+
   testWidgets('the picked mode reaches the import', (tester) async {
     final source = testDb();
     addTearDown(source.close);

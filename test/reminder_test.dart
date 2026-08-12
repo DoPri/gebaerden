@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gebaerden/platform/notify.dart';
@@ -153,6 +155,53 @@ void main() {
     );
   });
 
+  test('a tap on a reminder names the list it came from', () async {
+    final opened = <String>[];
+    reminderTapHandler = opened.add;
+    addTearDown(() => reminderTapHandler = null);
+    await initNotifications();
+
+    await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .handlePlatformMessage(
+          'dexterous.com/flutter/local_notifications',
+          const StandardMethodCodec().encodeMethodCall(
+            const MethodCall('didReceiveNotificationResponse', {
+              'notificationResponseType': 0,
+              'id': 1,
+              'payload': '${reminderPayload}kueche',
+            }),
+          ),
+          (_) {},
+        );
+
+    expect(opened, ['kueche']);
+  });
+
+  test('a tap that started the app cold still reaches the trainer', () async {
+    // The callback from initialize never fires for this one, the answer waits
+    // in the launch details until the app asks.
+    channels.launchPayload = '${reminderPayload}kueche';
+    final opened = <String>[];
+    reminderTapHandler = opened.add;
+    addTearDown(() => reminderTapHandler = null);
+    await initNotifications();
+
+    await handleNotificationLaunch();
+
+    expect(opened, ['kueche']);
+  });
+
+  test('a start that no notification began opens nothing', () async {
+    final opened = <String>[];
+    reminderTapHandler = opened.add;
+    addTearDown(() => reminderTapHandler = null);
+    await initNotifications();
+
+    await handleNotificationLaunch();
+
+    expect(opened, isEmpty);
+  });
+
   test('what is queued comes back', () async {
     channels.pending = [
       {
@@ -164,5 +213,20 @@ void main() {
     final pending = await pendingReminders();
     expect(pending.single.id, 1);
     expect(pending.single.body, 'Zeit für ein paar Gebärden.');
+  });
+
+  test('a platform without notifications queues nothing', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    channels.pending = [
+      {'id': 1, 'title': 'Gebärden üben', 'body': 'egal'},
+    ];
+
+    expect(await pendingReminders(), isEmpty);
+    expect(
+      await scheduleReminders([(reminder: _daily, listId: 'kueche', due: 1)]),
+      isFalse,
+    );
+    expect(channels.scheduled, isEmpty);
   });
 }

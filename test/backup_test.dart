@@ -5,8 +5,10 @@ import 'package:fsrs/fsrs.dart' as f;
 import 'package:gebaerden/api/client.dart';
 import 'package:gebaerden/db/database.dart';
 import 'package:gebaerden/db/lists.dart';
+import 'package:gebaerden/db/reminders.dart';
 import 'package:gebaerden/db/repo.dart';
 import 'package:gebaerden/media/variants.dart';
+import 'package:gebaerden/platform/notify.dart';
 import 'package:gebaerden/srs/scheduler.dart';
 import 'package:gebaerden/transfer/backup.dart';
 import 'package:http/http.dart' as http;
@@ -153,6 +155,45 @@ void main() {
 
     expect(await other.select(other.cards).get(), isEmpty);
     expect((await allLists(other)).map((l) => l.name), contains('Begrüßung'));
+  });
+
+  test('reminders come back on the list they belong to', () async {
+    await seed(db);
+    final list = (await allLists(db)).firstWhere((l) => l.name == 'Begrüßung');
+    await addReminder(
+      db,
+      list.id,
+      const Reminder(days: {1, 2, 3, 4, 5}, hour: 8, minute: 0),
+    );
+    final text = await exportBackup(db);
+
+    final fresh = testDb();
+    addTearDown(fresh.close);
+    await importBackup(fresh, text, ImportMode.replace);
+
+    final restored = await remindersFor(fresh, list.id);
+    expect(restored.single.reminder.days, {1, 2, 3, 4, 5});
+    expect(restored.single.reminder.time, '08:00');
+    // The id is device local, the row gets a fresh one on the way in.
+    expect(restored.single.id, isNotNull);
+  });
+
+  test('importing the same file twice keeps one set of reminders', () async {
+    await seed(db);
+    final list = (await allLists(db)).firstWhere((l) => l.name == 'Begrüßung');
+    await addReminder(
+      db,
+      list.id,
+      const Reminder(days: {1}, hour: 8, minute: 0),
+    );
+    final text = await exportBackup(db);
+
+    final fresh = testDb();
+    addTearDown(fresh.close);
+    await importBackup(fresh, text, ImportMode.replace);
+    await importBackup(fresh, text, ImportMode.replace);
+
+    expect(await allReminders(fresh), hasLength(1));
   });
 
   test('a section left out of the export is not in the file', () async {

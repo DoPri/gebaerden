@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart' show Value;
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gebaerden/db/database.dart';
 import 'package:gebaerden/db/lists.dart';
@@ -190,7 +191,7 @@ void main() {
       sampleEntry(id: 3, text: 'Baum', currentVideo: sampleVideo),
     ]);
     await addToList(db, list.id, [1]);
-    // The body counts what is due, and a fresh card is new rather than due.
+    // The body counts what is due and a fresh card is new rather than due.
     final card = await getOrCreateCard(db, 1, Direction.recognition);
     await db
         .into(db.cards)
@@ -222,5 +223,54 @@ void main() {
 
     expect(await remindersFor(db, list.id), isEmpty);
     expect(await allReminders(db), isEmpty);
+  });
+
+  testWidgets('deleting one list leaves the reminders of the other', (
+    tester,
+  ) async {
+    final other = await createList(db, 'Familie');
+    await seed(const Reminder(days: {1}, hour: 8, minute: 0));
+    await addReminder(
+      db,
+      other.id,
+      const Reminder(days: {2}, hour: 9, minute: 0),
+    );
+
+    await deleteList(db, list.id);
+
+    expect(await remindersFor(db, list.id), isEmpty);
+    expect(await remindersFor(db, other.id), hasLength(1));
+  });
+
+  testWidgets('the picked time replaces the old one', (tester) async {
+    await seed(
+      const Reminder(days: {1, 2, 3, 4, 5, 6, 7}, hour: 7, minute: 30),
+    );
+    await open(tester);
+
+    await tester.tap(find.text('Um 07:30 Uhr'));
+    await tester.pumpAndSettle();
+    // The dial cannot be aimed at a minute in a test, the text entry can.
+    await tester.tap(find.byIcon(Icons.keyboard_outlined));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, '9');
+    await tester.enterText(find.byType(TextField).last, '15');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    expect((await stored()).single.time, '09:15');
+    // Daily is one repeating alarm and it carries the new time.
+    expect(channels.scheduled.single['scheduledDateTime'], contains('09:15'));
+    // Rescheduled without asking for the permission again.
+    expect(
+      channels.calls,
+      isNot(
+        contains(
+          'dexterous.com/flutter/local_notifications.'
+          'requestNotificationsPermission',
+        ),
+      ),
+    );
+    await drain(tester);
   });
 }

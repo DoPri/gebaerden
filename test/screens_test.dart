@@ -180,6 +180,33 @@ void main() {
       expect(find.widgetWithText(TextFormField, '9'), findsOneWidget);
     });
 
+    testWidgets('a budget typed into the list is kept there', (tester) async {
+      await seed(3);
+      final list = await createList(db, 'Küche');
+      await addToList(db, list.id, [1]);
+
+      await tester.pumpWidget(
+        await harness(db, LearnScreen(db: db, listId: list.id)),
+      );
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Tageslimits dieser Liste'.toUpperCase()),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+
+      // The two fields start on the global setting.
+      await tester.enterText(find.widgetWithText(TextFormField, '20'), '4');
+      await tester.pumpAndSettle();
+      await tester.enterText(find.widgetWithText(TextFormField, '200'), '8');
+      await tester.pumpAndSettle();
+
+      final row = (await allLists(db)).firstWhere((l) => l.id == list.id);
+      expect(row.newPerDay, 4);
+      expect(row.reviewPerDay, 8);
+      expect(find.text('Vorgabe verwenden'), findsOneWidget);
+    });
+
     testWidgets('switching the scope recounts', (tester) async {
       await seed(5);
       final list = await createList(db, 'Küche');

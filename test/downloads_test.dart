@@ -53,16 +53,18 @@ void main() {
   late AppDatabase db;
   late FakeChannels channels;
   late Downloads manager;
+  late MemoryStorage storage;
 
   setUpAll(() {
     // Must happen before anything touches the singleton.
-    FileDownloader(persistentStorage: MemoryStorage());
+    storage = MemoryStorage();
+    FileDownloader(persistentStorage: storage);
   });
 
   setUp(() async {
     db = testDb();
     channels = FakeChannels()..install();
-    // The update stream takes one listener, and every start() adds one.
+    // The update stream takes one listener and every start() adds one.
     await FileDownloader().resetUpdates();
     manager = Downloads(db);
     downloads = manager;
@@ -168,7 +170,7 @@ void main() {
 
     test('a task killed with the app is enqueued again', () async {
       await queue('entry:1', 'Hallo', PackageStatus.running);
-      // All a kill leaves behind. The native queue is empty, and no file was
+      // All a kill leaves behind. The native queue is empty and no file was
       // written, so tracking cannot mark the record complete either.
       await FileDownloader().database.updateRecord(
         TaskRecord(videoTask(videoId: 7777), TaskStatus.enqueued, 0, 0),
@@ -298,12 +300,42 @@ void main() {
       expect((await package('entry:1')).done, 1);
     });
 
+    test('a task the system paused goes back into the queue', () async {
+      // Nobody here asks for a pause. The system does and then it waits.
+      await queue('entry:1', 'Hallo', PackageStatus.running);
+      await manager.start();
+
+      final task = videoTask();
+      await storage.storeResumeData(ResumeData(task, 'weiter', 20));
+      addTearDown(() => storage.removeResumeData(null));
+      await report(task, TaskStatus.paused);
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+
+      expect(channels.enqueued, contains(task.taskId));
+    });
+
+    test('a package that was only cancelled is not done', () async {
+      await queue('entry:1', 'Hallo', PackageStatus.running);
+      await manager.start();
+
+      // Both files of the plan came back cancelled and nothing arrived, so a
+      // resume still has everything to fetch.
+      await report(videoTask(), TaskStatus.canceled);
+      await report(videoTask(kind: AssetKind.thumbnail), TaskStatus.canceled);
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+
+      // start() put the row left on running back in the queue and the cancels
+      // must not carry it from there to done.
+      expect((await package('entry:1')).status, PackageStatus.queued);
+      expect((await package('entry:1')).done, 0);
+    });
+
     test('a paused package survives the cancels that follow', () async {
       await queue('entry:1', 'Hallo', PackageStatus.running);
       await manager.start();
 
       await manager.pausePackage('entry:1');
-      // The plugin reports every canceled task, and the records stay.
+      // The plugin reports every canceled task and the records stay.
       await report(videoTask(), TaskStatus.canceled);
       await report(videoTask(kind: AssetKind.thumbnail), TaskStatus.canceled);
       await Future<void>.delayed(const Duration(milliseconds: 600));
@@ -467,7 +499,7 @@ void main() {
       /// The whole way in. The plugin hands the press to whoever registered,
       /// and start() is what registers. This used to be an argument main
       /// passed to initNotifications. When it went missing the buttons still
-      /// drew and still woke the app, and no test noticed because none of
+      /// drew and still woke the app and no test noticed because none of
       /// them ever pressed one.
       Future<void> press(String action, String id) async {
         packageActionHandler!(action, id);

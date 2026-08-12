@@ -13,7 +13,7 @@ void main() {
   tearDown(() => tmp.deleteSync(recursive: true));
 
   test('a file the picker read into memory keeps its umlauts', () async {
-    // This is what Android hands over, and readAsString would mangle it.
+    // This is what Android hands over and readAsString would mangle it.
     final file = XFile.fromData(
       Uint8List.fromList(utf8.encode('Begrüßung')),
       name: 'liste.dgsliste',

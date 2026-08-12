@@ -33,7 +33,7 @@ void main() {
   });
 
   test('the downloader may hold a foreground service', () {
-    // Without these the queue stops nine minutes after the app goes away, and
+    // Without these the queue stops nine minutes after the app goes away and
     // from API 34 the service does not even start.
     expect(manifest, contains('android.permission.FOREGROUND_SERVICE'));
     expect(

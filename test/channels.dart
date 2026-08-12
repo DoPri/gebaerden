@@ -18,7 +18,7 @@ class FakeChannels {
   final enqueued = <String>[];
 
   /// Stands in for the native queue: task id to the task as json. Enqueueing
-  /// fills it, cancelling empties it, and allTasks reads it back.
+  /// fills it, cancelling empties it and allTasks reads it back.
   final queue = <String, String>{};
 
   void _queue(Map<Object?, Object?> task) {
@@ -41,6 +41,10 @@ class FakeChannels {
 
   /// What the notification plugin reports as still queued.
   List<Map<String, Object?>> pending = [];
+
+  /// The payload of the notification the app was started from, null when it
+  /// was started the usual way.
+  String? launchPayload;
 
   /// Notification ids the app took down, in order.
   final cancelled = <int>[];
@@ -86,6 +90,17 @@ class FakeChannels {
           return notificationsAllowed;
         case 'pendingNotificationRequests':
           return pending;
+        case 'getNotificationAppLaunchDetails':
+          if (launchPayload == null) return null;
+          return {
+            'notificationLaunchedApp': true,
+            'notificationResponse': {
+              'notificationId': 1,
+              'notificationResponseType': 0,
+              'payload': launchPayload,
+              'data': <String, Object?>{},
+            },
+          };
         case 'show':
           shown.add(call.arguments as Map<Object?, Object?>);
           return null;

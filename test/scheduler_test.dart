@@ -151,7 +151,7 @@ void main() {
 
     test('a row without stability does not kill the trainer', () async {
       await seed(1);
-      // Only a corrupted database can produce this, and dart-fsrs
+      // Only a corrupted database can produce this and dart-fsrs
       // dereferences stability unchecked.
       final broken = (await getOrCreateCard(
         db,
@@ -231,6 +231,22 @@ void main() {
       );
 
       expect((await reviewedToday(db)).total, 0);
+    });
+
+    test('a list counts only the answers of its own words', () async {
+      await seed(2);
+      for (final id in [1, 2]) {
+        await gradeCard(
+          db,
+          await getOrCreateCard(db, id, Direction.recognition),
+          f.Rating.good,
+        );
+      }
+
+      // The day a list spends on its budget leaves the other one untouched.
+      expect((await reviewedToday(db, entryIds: [1])).total, 1);
+      expect((await reviewedToday(db, entryIds: [1, 2])).total, 2);
+      expect((await reviewedToday(db, entryIds: [])).total, 0);
     });
   });
 
