@@ -1,7 +1,7 @@
 version: 2
 
 updates:
-  # The workflows and the composite action they all go through.
+  # Workflows and their actions
   - package-ecosystem: github-actions
     directories:
       - /
@@ -20,4 +20,34 @@ updates:
       day: monday
     groups:
       dart:
+        patterns: ['*']
+
+  # base images in Dockerfile
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      images:
+        patterns: ['*']
+
+  # fastlane (for releases)
+  - package-ecosystem: bundler
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      ruby:
+        patterns: ['*']
+
+  # Android build
+  - package-ecosystem: gradle
+    directory: /android
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      android:
         patterns: ['*']
