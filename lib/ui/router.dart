@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../db/database.dart';
 import '../packages/manager.dart';
 import '../srs/charset.dart';
+import '../theme.dart';
 import 'charset_screen.dart';
 import 'dictionary_screen.dart';
 import 'entry_screen.dart';
@@ -12,16 +13,22 @@ import 'lists_screen.dart';
 import 'more_screen.dart';
 import 'offline_screen.dart';
 import 'shell.dart';
+import 'widgets/pieces.dart';
 
 final rootKey = GlobalKey<NavigatorState>();
 
 GoRouter buildRouter(AppDatabase db) {
   return GoRouter(
     navigatorKey: rootKey,
+    // Without one of these go_router puts the raw exception on screen, which
+    // any typed address on the web reaches.
+    errorBuilder: (_, _) => const _NoRoute(),
     routes: [
       GoRoute(
         parentNavigatorKey: rootKey,
-        path: '/eintrag/:id',
+        // Digits only. On the web the address bar is a way in of its own and
+        // int.parse in the builder throws where nothing catches it.
+        path: r'/eintrag/:id(\d+)',
         builder: (_, state) =>
             EntryScreen(db: db, id: int.parse(state.pathParameters['id']!)),
       ),
@@ -42,7 +49,7 @@ GoRouter buildRouter(AppDatabase db) {
         path: '/neu',
         builder: (_, _) => NewestScreen(db: db),
       ),
-      // On the web the address bar is a way in of its own, and the screen
+      // On the web the address bar is a way in of its own and the screen
       // would offer packages that no queue picks up.
       if (downloadsAvailable)
         GoRoute(
@@ -110,4 +117,30 @@ GoRouter buildRouter(AppDatabase db) {
       ),
     ],
   );
+}
+
+class _NoRoute extends StatelessWidget {
+  const _NoRoute();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: context.colors.bg,
+      body: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Note('Diese Adresse gibt es nicht.', problem: true),
+            // go, not push. The dictionary sits in the tab shell and pushing
+            // that on top of itself reuses its navigator.
+            AppButton(
+              label: 'Zum Wörterbuch',
+              icon: Icons.menu_book_outlined,
+              onPressed: () => context.go('/'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

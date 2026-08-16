@@ -115,6 +115,32 @@ void main() {
     await drain(tester);
   });
 
+  testWidgets('an entry id that is not a number says so', (tester) async {
+    await tester.pumpWidget(await app());
+    await tester.pumpAndSettle();
+
+    router.push('/eintrag/nope');
+    await settle(tester);
+
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('Diese Adresse gibt es nicht'), findsOneWidget);
+    await drain(tester);
+  });
+
+  testWidgets('an address nothing matches leads back', (tester) async {
+    await tester.pumpWidget(await app());
+    await tester.pumpAndSettle();
+
+    router.push('/gibtesnicht');
+    await settle(tester);
+    expect(find.textContaining('Diese Adresse gibt es nicht'), findsOneWidget);
+
+    await tester.tap(find.text('Zum Wörterbuch'));
+    await settle(tester);
+    expect(find.text('NACH BUCHSTABE'), findsOneWidget);
+    await drain(tester);
+  });
+
   testWidgets('a list route renders the list', (tester) async {
     await cacheEntries(db, [
       sampleEntry(id: 1, text: 'Hallo', currentVideo: sampleVideo),

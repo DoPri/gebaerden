@@ -58,7 +58,13 @@ class _EntryScreenState extends State<EntryScreen> {
 
     try {
       final fresh = await fetchEntry(widget.id);
-      if (fresh == null || !mounted) return;
+      if (!mounted) return;
+      // A deleted or mistyped id answers with null rather than an error and
+      // the screen used to sit blank under its own app bar forever.
+      if (fresh == null) {
+        if (_entry == null) setState(() => _failed = true);
+        return;
+      }
       final row = (await cacheEntries(widget.db, [fresh])).single;
       if (!mounted) return;
       setState(() => _entry = row);

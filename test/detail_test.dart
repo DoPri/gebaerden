@@ -121,6 +121,20 @@ void main() {
       await drain(tester);
     });
 
+    testWidgets('an id the api does not know says so', (tester) async {
+      stubApi({'entry': null});
+      await tester.pumpWidget(
+        await harness(db, EntryScreen(db: db, id: 999999)),
+      );
+      await settle(tester, steps: 20);
+
+      expect(
+        find.textContaining('konnte nicht geladen werden'),
+        findsOneWidget,
+      );
+      await drain(tester);
+    });
+
     testWidgets('picking a variant is remembered', (tester) async {
       stubApi({
         'entry': {
