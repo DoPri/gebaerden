@@ -32,8 +32,6 @@ dependencies:
   video_player: ^2.13.0
 
 dev_dependencies:
-  # 2.15.2 and up want analyzer 13.3, which wants meta 1.18.3. Flutter
-  # 3.44.9 pins meta 1.18.0, so this is as new as it gets.
   build_runner: ^2.15.1
   drift_dev: ^2.34.5
   flutter_lints: ^6.0.0
