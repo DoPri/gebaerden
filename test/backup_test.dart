@@ -196,6 +196,47 @@ void main() {
     expect(await allReminders(fresh), hasLength(1));
   });
 
+  test('merging the same file twice keeps one set of reminders', () async {
+    await seed(db);
+    final list = (await allLists(db)).firstWhere((l) => l.name == 'Begrüßung');
+    await addReminder(
+      db,
+      list.id,
+      const Reminder(days: {1}, hour: 8, minute: 0),
+    );
+    final text = await exportBackup(db);
+
+    final fresh = testDb();
+    addTearDown(fresh.close);
+    await importBackup(fresh, text, ImportMode.merge);
+    await importBackup(fresh, text, ImportMode.merge);
+
+    expect(await allReminders(fresh), hasLength(1));
+  });
+
+  test('merging keeps a reminder the file does not carry', () async {
+    await seed(db);
+    final list = (await allLists(db)).firstWhere((l) => l.name == 'Begrüßung');
+    await addReminder(
+      db,
+      list.id,
+      const Reminder(days: {1}, hour: 8, minute: 0),
+    );
+    final text = await exportBackup(db);
+
+    final fresh = testDb();
+    addTearDown(fresh.close);
+    await importBackup(fresh, text, ImportMode.merge);
+    await addReminder(
+      fresh,
+      list.id,
+      const Reminder(days: {6, 7}, hour: 10, minute: 30),
+    );
+    await importBackup(fresh, text, ImportMode.merge);
+
+    expect(await allReminders(fresh), hasLength(2));
+  });
+
   test('a section left out of the export is not in the file', () async {
     await seed(db);
     final text = await exportBackup(db, sections: const {BackupSection.lists});

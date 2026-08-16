@@ -215,17 +215,7 @@ Future<ImportSummary> importBackup(
       });
     }
     if (want(BackupSection.reminders)) {
-      await db.batch(
-        (b) => b.insertAll(db.reminders, [
-          for (final r in reminders)
-            RemindersCompanion.insert(
-              listId: r.listId,
-              days: r.days,
-              hour: r.hour,
-              minute: r.minute,
-            ),
-        ]),
-      );
+      await _mergeReminders(db, reminders, mode);
     }
     if (want(BackupSection.progress)) {
       await _mergeCards(db, cards, mode);
@@ -288,6 +278,37 @@ Future<void> _mergeReviews(
           rating: r.rating,
           reviewedAt: r.reviewedAt,
           before: r.before,
+        ),
+    ]),
+  );
+}
+
+/// The id is dropped on the way out, so nothing else tells two reminders
+/// apart. One list, one day set and one time is one reminder.
+String _reminderKey(StoredReminder r) =>
+    '${r.listId}@${r.days}@${r.hour}:${r.minute}';
+
+Future<void> _mergeReminders(
+  AppDatabase db,
+  List<StoredReminder> incoming,
+  ImportMode mode,
+) async {
+  var fresh = incoming;
+  if (mode != ImportMode.replace) {
+    final seen = (await db.select(db.reminders).get())
+        .map(_reminderKey)
+        .toSet();
+    fresh = incoming.where((r) => !seen.contains(_reminderKey(r))).toList();
+  }
+
+  await db.batch(
+    (b) => b.insertAll(db.reminders, [
+      for (final r in fresh)
+        RemindersCompanion.insert(
+          listId: r.listId,
+          days: r.days,
+          hour: r.hour,
+          minute: r.minute,
         ),
     ]),
   );
