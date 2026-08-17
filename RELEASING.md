@@ -105,7 +105,9 @@ signature from a GitHub one.
 
 The API cannot create an app, so the first release goes through the console by
 hand. Create the app, work through the set-up checklist, upload one
-bundle so Play App Signing is set up, then create the internal testing track.
+bundle so Play App Signing is set up, then create the closed testing track and
+put testers on it. `supply` creates the track object on upload but cannot
+invite anyone, and a closed test without testers counts towards nothing.
 
 After that the uploads are automatic, which needs a service account. Flutter's
 deployment guide covers it and hands off to the fastlane steps:
@@ -126,7 +128,9 @@ bundle exec fastlane android check
 ```
 
 That resolves the credentials and validates an upload without shipping
-anything.
+anything. It also reports what a release would do: the versionCode it read out
+of `pubspec.yaml`, whether the listing texts differ from the ones Play holds
+and whether a changelog for that versionCode exists.
 
 ## Raising the version
 
@@ -151,7 +155,7 @@ git push origin v1.0.1
 ```
 
 The workflow runs the full CI check, builds the bundle and the split APKs,
-attaches the APKs to the GitHub release and uploads the bundle to Play internal
+attaches the APKs to the GitHub release and uploads the bundle to Play closed
 testing. The tag has to match `version:` in `pubspec.yaml` or the run stops
 before building.
 
@@ -177,8 +181,8 @@ and differs per channel.
 
 ## Testing a release
 
-A tag carrying a suffix is a pre-release. It goes to GitHub only and never
-touches Play.
+A tag carrying a suffix is a pre-release on GitHub. It goes to Play the same
+way every other tag does.
 
 ```bash
 git tag v1.0.1-rc1
@@ -186,11 +190,11 @@ git push origin v1.0.1-rc1
 ```
 
 Testers on Obtainium get it if they allow pre-releases, everyone else can grab
-the APK from the release page. `pubspec.yaml` stays at `1.0.1`, the suffix is
-only on the tag.
+the APK from the release page. The suffix belongs in `version:` in
+`pubspec.yaml` as well, because the workflow checks that the two match.
 
-For testers with a Google account the internal track is the shorter way. It
-needs no review and is live within minutes of the upload.
+Testers with a Google account get it through closed testing instead, once the
+review is through.
 
 The bundle is kept as a workflow artifact for 14 days, so a failed Play upload
 can be retried by hand without building again.
@@ -205,8 +209,13 @@ bundle exec fastlane android listing
 
 This needs a release to exist already. `supply` hangs the listing off a release
 and offers no way around it, so on a fresh app the first push has to be the
-`internal` lane, which carries a bundle. After that the listing lane works on
+`closed` lane, which carries a bundle. After that the listing lane works on
 its own.
+
+Only what differs goes up, on this lane and on the release. Every image is
+compared by checksum against the one Play holds, and the three texts are
+compared against the live listing before anything is sent, so a run that
+changes nothing uploads nothing.
 
 F-Droid picks the same change up on its next build of this repository.
 

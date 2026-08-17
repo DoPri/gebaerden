@@ -1,8 +1,6 @@
 name: Release
 
-# A tag without a suffix ships everywhere. A tag like v1.0.1-rc1 stays on
-# GitHub as a pre-release, so testers reach it through Obtainium without
-# anything landing in Play.
+# A tag like v1.0.1-rc1 additionally stays a pre-release on GitHub, so testers reach it through Obtainium.
 on:
   push:
     tags: ["v*"]
@@ -157,10 +155,10 @@ jobs:
 
       - run: bundle install --jobs 4
 
-      - name: Play internal testing
+      - name: Play closed testing
         env:
           PLAY_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
-        run: bundle exec fastlane android internal
+        run: bundle exec fastlane android closed
 
       - run: rm -f "$RUNNER_TEMP/release.jks"
         if: always()

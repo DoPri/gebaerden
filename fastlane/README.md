@@ -15,13 +15,13 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 ## Android
 
-### android internal
+### android closed
 
 ```sh
-[bundle exec] fastlane android internal
+[bundle exec] fastlane android closed
 ```
 
-Ship the bundle to internal testing and sync the listing
+Ship the bundle to closed testing and sync the listing
 
 ### android listing
 

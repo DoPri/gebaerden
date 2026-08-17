@@ -2,10 +2,16 @@
 # reads the same metadata tree on its own, GitHub gets its APKs from the
 # release workflow.
 
+require "supply"
+
 # Absolute, because a lane runs from a working directory that is not promised.
 ROOT = File.expand_path("..", __dir__)
 BUNDLE = File.join(ROOT, "build/app/outputs/bundle/release/app-release.aab")
 METADATA = File.join(ROOT, "fastlane/metadata/android")
+
+TRACK = "alpha" # aka. "closed testing"
+
+TEXTS = %w[title short_description full_description].freeze
 
 opt_out_usage
 
@@ -25,42 +31,114 @@ def service_account
     )
 end
 
+def version_code
+  File.read(File.join(ROOT, "pubspec.yaml"))[/^version:\s*\S+\+(\d+)/, 1] ||
+    UI.user_error!("No version with a versionCode in pubspec.yaml")
+end
+
+def locales
+  Dir.children(METADATA).reject { |entry| entry.start_with?(".") }
+     .select { |entry| File.directory?(File.join(METADATA, entry)) }
+end
+
+# A release carries the notes for its versionCode. Without a file supply uploads
+# an empty string and wipes what Play shows, so a missing changelog means the
+# changelog is left alone rather than emptied.
+def changelog?(code)
+  locales.all? do |locale|
+    File.exist?(File.join(METADATA, locale, "changelogs", "#{code}.txt"))
+  end
+end
+
+def normalize(text)
+  text.to_s.gsub("\r\n", "\n").strip
+end
+
+
+def listing_changed?
+  config = FastlaneCore::Configuration.create(
+    Supply::Options.available_options,
+    json_key_data: service_account,
+  )
+  client = Supply::Client.make_from_config(params: config)
+
+  client.begin_edit(package_name: config[:package_name])
+  begin
+    live = client.listings.to_h { |listing| [listing.language, listing] }
+  ensure
+    client.abort_current_edit
+  end
+
+  locales.any? do |locale|
+    listing = live[locale]
+    # A locale Play has never seen has everything to say.
+    next true unless listing
+
+    TEXTS.any? do |field|
+      path = File.join(METADATA, locale, "#{field}.txt")
+      next false unless File.exist?(path)
+
+      changed = normalize(File.read(path, encoding: "UTF-8")) != normalize(listing.send(field))
+      UI.message("#{locale}/#{field}.txt differs from Play") if changed
+      changed
+    end
+  end
+end
+
 default_platform(:android)
 
 platform :android do
-  desc "Ship the bundle to internal testing and sync the listing"
-  lane :internal do
+  desc "Ship the bundle to closed testing and sync the listing"
+  lane :closed do
     upload_to_play_store(
-      track: "internal",
+      track: TRACK,
       release_status: "completed",
       aab: BUNDLE,
       metadata_path: METADATA,
       json_key_data: service_account,
       skip_upload_apk: true,
+      skip_upload_metadata: !listing_changed?,
+      skip_upload_changelogs: !changelog?(version_code),
+      sync_image_upload: true,
     )
   end
 
   desc "Push texts, icon and screenshots without shipping a build"
   lane :listing do
     upload_to_play_store(
-      track: "internal",
+      track: TRACK,
       aab: BUNDLE,
       metadata_path: METADATA,
+      version_code: version_code,
       json_key_data: service_account,
       skip_upload_aab: true,
       skip_upload_apk: true,
+      skip_upload_metadata: !listing_changed?,
+      skip_upload_changelogs: !changelog?(version_code),
+      sync_image_upload: true,
     )
   end
 
   desc "Resolve the credentials and the listing without uploading anything"
   lane :check do
     validate_play_store_json_key(json_key_data: service_account)
+
+    code = version_code
+    changed = listing_changed?
+    notes = changelog?(code)
+    UI.message("versionCode #{code}")
+    UI.message(changed ? "Listing texts differ from Play" : "Listing texts match Play")
+    UI.message(notes ? "Changelog found for #{code}" : "No changelog for #{code}, notes stay as they are")
+
     upload_to_play_store(
-      track: "internal",
+      track: TRACK,
       aab: BUNDLE,
       metadata_path: METADATA,
       json_key_data: service_account,
       skip_upload_apk: true,
+      skip_upload_metadata: !changed,
+      skip_upload_changelogs: !notes,
+      sync_image_upload: true,
       validate_only: true,
     )
   end
