@@ -1,4 +1,4 @@
-DGS Lernen is a plain, ad-free app for learning German Sign Language (DGS). The videos come from the open dictionary SignDict.
+DGS Lernen is a plain, ad-free and open source app for learning German Sign Language (DGS). The videos come from the open dictionary SignDict.
 
 Your progress stays on the device and can be exported to a file and moved to another device.
 
@@ -22,5 +22,9 @@ Send a list as a file. Anyone with the app taps the attachment and takes it over
 
 <b>Offline</b>
 Download single words, whole letters or the entire dictionary. Search keeps working without a connection.
+
+<b>Open source</b>
+The whole source code is public, under the GNU GPL 3.0. Anyone can read what the app does, build it themselves, report a bug or contribute a change.
+https://github.com/DoPri/gebaerden
 
 The sign videos are not part of this app. They come from SignDict under various Creative Commons licenses. Rights holder and license are shown under every video. This app is not affiliated with SignDict.
