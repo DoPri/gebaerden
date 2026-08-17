@@ -192,6 +192,9 @@ class Note extends StatelessWidget {
   }
 }
 
+Widget insetSides(Widget child) =>
+    SafeArea(top: false, bottom: false, child: child);
+
 /// For the few fields that color their border by state.
 OutlineInputBorder outline(Color color) => OutlineInputBorder(
   borderRadius: BorderRadius.circular(4),

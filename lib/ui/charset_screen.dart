@@ -130,7 +130,7 @@ class _CharsetScreenState extends State<CharsetScreen> {
           child: Container(height: 1, color: c.border),
         ),
       ),
-      body: switch (true) {
+      body: insetSides(switch (true) {
         _ when _busy => const Note('Lädt…'),
         _ when _error != null => Note(_error!, problem: true),
         _ when _set.isEmpty => const Note(
@@ -161,7 +161,7 @@ class _CharsetScreenState extends State<CharsetScreen> {
             ),
           ],
         ),
-      },
+      }),
     );
   }
 

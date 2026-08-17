@@ -195,6 +195,38 @@ void main() {
     await drain(tester);
   });
 
+  testWidgets('insetSides keeps the body clear of a cutout', (tester) async {
+    late EdgeInsets handedOn;
+
+    await tester.pumpWidget(
+      MediaQuery(
+        // A landscape cutout on the left, the navigation bar on the right.
+        data: const MediaQueryData(
+          padding: EdgeInsets.fromLTRB(60, 20, 90, 40),
+        ),
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: insetSides(
+            Builder(
+              builder: (context) {
+                handedOn = MediaQuery.of(context).padding;
+                return const SizedBox.expand();
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // The sides are taken here. The vertical insets stay for the AppBar above
+    // and the list padding below, which is what handles them.
+    expect(handedOn, const EdgeInsets.fromLTRB(0, 20, 0, 40));
+
+    final box = tester.getRect(find.byType(SizedBox));
+    expect(box.left, 60);
+    expect(box.right, 800 - 90);
+  });
+
   testWidgets('a list can carry a header row', (tester) async {
     final rows = await cacheEntries(db, [
       sampleEntry(id: 1, text: 'Hallo', currentVideo: sampleVideo),

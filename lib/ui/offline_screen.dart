@@ -65,7 +65,7 @@ class _OfflineScreenState extends State<OfflineScreen> {
           child: Container(height: 1, color: c.border),
         ),
       ),
-      body: _body(context),
+      body: insetSides(_body(context)),
     );
   }
 

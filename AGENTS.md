@@ -109,6 +109,10 @@ holds:
 - As few comments as possible. Most lines need none.
 - A comment says why, not what. The code already says what it does. The most
   useful kind explains why the obvious approach did not work.
+- Two lines is the ceiling. Longer means a mechanism is being explained, and a
+  mechanism belongs in AGENTS.md or an ADR, with at most a pointer in the code.
+- Nothing a prose file already records. One place per fact.
+- A helper whose name and body say it gets no doc comment.
 - No comment that reads like it was generated. No cheerful asides, no restating
   the line below, no explaining the language. `// which is what makes the app
   work on a plane` is an example of what to avoid.
@@ -222,6 +226,19 @@ it. Without an explicit `SystemUiOverlayStyle` the system enforces its own
 contrast, and under three-button navigation that lays a dark band over the
 light theme. Gesture navigation hides the whole problem, so it has to be
 checked with `cmd overlay enable com.android.internal.systemui.navbar.threebutton`.
+
+The vertical insets land on their own: `Scaffold` drops the top padding when
+there is an `AppBar` and the bottom one when there is a `bottomNavigationBar`,
+and a `ListView` without `padding` pads itself from the `MediaQuery`. Passing a
+padding turns that off, which is why the lists in the tab screens may carry one
+and the ones in the pushed screens may not. Sideways it does not work out: the
+`AppBar` wraps itself in a `SafeArea` but the body below it keeps the
+horizontal insets, and a padding-less `ListView` deliberately leaves the cross
+axis alone. In landscape that put rows and tap targets under a display cutout
+and under the side navigation bar, so a pushed screen wraps its body in
+`insetSides`. The tab shell has its own `SafeArea` and never had the problem.
+Rotate an emulator with `cmd overlay enable
+com.android.internal.display.cutout.emulation.tall` to see it.
 
 dart2js knows one number type. `1.0.runtimeType` is `int` in a browser and
 `double` on a device, so comparing a stored value against a default by

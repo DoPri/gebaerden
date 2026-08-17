@@ -414,7 +414,7 @@ class _NewestScreenState extends State<NewestScreen> {
           child: Container(height: 1, color: c.border),
         ),
       ),
-      body: switch (true) {
+      body: insetSides(switch (true) {
         _ when _entries.isNotEmpty => EntryListView(
           db: widget.db,
           entries: _entries,
@@ -426,7 +426,7 @@ class _NewestScreenState extends State<NewestScreen> {
           problem: true,
         ),
         _ => const Note('Nichts gefunden.'),
-      },
+      }),
     );
   }
 }

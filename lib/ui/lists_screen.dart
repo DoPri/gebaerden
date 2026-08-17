@@ -420,62 +420,64 @@ class _ListScreenState extends State<ListScreen> {
       ),
       // The reminder belongs to the list, not to its contents, so it stands
       // even while the list is still empty.
-      body: Column(
-        children: [
-          if (_entries.any((e) => e.hasVideo)) ...[
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: AppButton(
-                  label: 'Diese Liste lernen',
-                  icon: Icons.school_outlined,
-                  filled: true,
-                  // go, not push. The trainer sits in the tab shell and
-                  // pushing that on top of itself reuses its navigator.
-                  onPressed: () => context.go('/lernen?liste=${widget.id}'),
+      body: insetSides(
+        Column(
+          children: [
+            if (_entries.any((e) => e.hasVideo)) ...[
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: AppButton(
+                    label: 'Diese Liste lernen',
+                    icon: Icons.school_outlined,
+                    filled: true,
+                    // go, not push. The trainer sits in the tab shell and
+                    // pushing that on top of itself reuses its navigator.
+                    onPressed: () => context.go('/lernen?liste=${widget.id}'),
+                  ),
                 ),
+              ),
+              const HairLine(),
+            ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SectionLabel('Erinnerungen'),
+                  const SizedBox(height: 8),
+                  ReminderPanel(db: widget.db, listId: widget.id),
+                ],
               ),
             ),
             const HairLine(),
-          ],
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SectionLabel('Erinnerungen'),
-                const SizedBox(height: 8),
-                ReminderPanel(db: widget.db, listId: widget.id),
-              ],
-            ),
-          ),
-          const HairLine(),
-          if (_entries.isEmpty)
-            const Expanded(
-              child: Note(
-                'Noch keine Wörter. Öffne eine Gebärde im Wörterbuch und '
-                'füge sie zu einer Liste hinzu.',
-              ),
-            )
-          else
-            Expanded(
-              child: EntryListView(
-                db: widget.db,
-                entries: _entries,
-                onOpen: (entry) => context.push('/eintrag/${entry.id}'),
-                trailing: (entry) => IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 18),
-                  color: c.fgMuted,
-                  tooltip: '${entry.word} aus der Liste entfernen',
-                  onPressed: () async {
-                    await removeFromList(widget.db, widget.id, [entry.id]);
-                    await _load();
-                  },
+            if (_entries.isEmpty)
+              const Expanded(
+                child: Note(
+                  'Noch keine Wörter. Öffne eine Gebärde im Wörterbuch und '
+                  'füge sie zu einer Liste hinzu.',
+                ),
+              )
+            else
+              Expanded(
+                child: EntryListView(
+                  db: widget.db,
+                  entries: _entries,
+                  onOpen: (entry) => context.push('/eintrag/${entry.id}'),
+                  trailing: (entry) => IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 18),
+                    color: c.fgMuted,
+                    tooltip: '${entry.word} aus der Liste entfernen',
+                    onPressed: () async {
+                      await removeFromList(widget.db, widget.id, [entry.id]);
+                      await _load();
+                    },
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

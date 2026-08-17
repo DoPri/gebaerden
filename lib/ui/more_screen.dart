@@ -372,13 +372,15 @@ class _LetterScreenState extends State<LetterScreen> {
           child: Container(height: 1, color: c.border),
         ),
       ),
-      body: rows.isEmpty
-          ? Note(_busy ? 'Lädt…' : 'Nichts gefunden.')
-          : EntryListView(
-              db: widget.db,
-              entries: rows,
-              onOpen: (entry) => context.push('/eintrag/${entry.id}'),
-            ),
+      body: insetSides(
+        rows.isEmpty
+            ? Note(_busy ? 'Lädt…' : 'Nichts gefunden.')
+            : EntryListView(
+                db: widget.db,
+                entries: rows,
+                onOpen: (entry) => context.push('/eintrag/${entry.id}'),
+              ),
+      ),
     );
   }
 }

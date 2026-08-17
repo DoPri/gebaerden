@@ -131,7 +131,7 @@ class _EntryScreenState extends State<EntryScreen> {
           child: Container(height: 1, color: c.border),
         ),
       ),
-      body: switch (entry) {
+      body: insetSides(switch (entry) {
         null when _failed => const Note(
           'Die Gebärde konnte nicht geladen werden.',
           problem: true,
@@ -211,7 +211,7 @@ class _EntryScreenState extends State<EntryScreen> {
             ),
           ],
         ),
-      },
+      }),
     );
   }
 }
