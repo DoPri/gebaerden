@@ -24,7 +24,7 @@ void main() {
   late FakeChannels channels;
 
   setUpAll(() {
-    // Must happen before anything touches the singleton.
+    // Required before accessing FileDownloader singleton.
     FileDownloader(persistentStorage: MemoryStorage());
   });
 
@@ -43,11 +43,11 @@ void main() {
 
   Future<void> open(WidgetTester tester) async {
     await tester.pumpWidget(await harness(db, OfflineScreen(db: db)));
-    // A running package animates forever, so never pumpAndSettle here.
+    // Avoids infinite progress animation hangs.
     await settle(tester);
   }
 
-  /// Rows can sit below the fold and a tap on those goes nowhere.
+  /// Ensures element is scrolled into view before tapping.
   Future<void> hit(WidgetTester tester, Finder what) async {
     await tester.ensureVisible(what);
     await settle(tester, steps: 2);
@@ -114,8 +114,7 @@ void main() {
       await cacheEntries(db, [
         sampleEntry(id: 1, text: 'Hallo', currentVideo: sampleVideo),
       ]);
-      // Both files are already there, so the walk finds nothing left to fetch
-      // and the row is done rather than paused.
+      // Pre-seeded assets allow immediate completion upon resume.
       for (final kind in AssetKind.values) {
         await db
             .into(db.assets)

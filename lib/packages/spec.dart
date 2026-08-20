@@ -1,6 +1,4 @@
-// What a download job covers. Plain data, so the web build can carry the same
-// rows without the queue behind them.
-
+// Shared spec across platforms; web excludes execution queue.
 sealed class PackageSpec {
   const PackageSpec();
 

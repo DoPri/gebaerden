@@ -4,14 +4,13 @@ import 'dart:math';
 
 import 'package:http/http.dart' as http;
 
-/// signdict.org sends no CORS header, so a browser cannot call it directly.
-/// The web build is pointed at a proxy with --dart-define=api=...
+/// Upstream lacks CORS headers; proxy required for web.
 const endpoint = String.fromEnvironment(
   'api',
   defaultValue: 'https://signdict.org/graphql-api',
 );
 
-/// signdict.org is volunteer-run.
+// Rate limits for volunteer-run upstream.
 const _maxConcurrent = 4;
 const _minGap = Duration(milliseconds: 60);
 const _maxAttempts = 3;
@@ -26,7 +25,7 @@ class ApiError implements Exception {
   String toString() => 'ApiError: $message';
 }
 
-/// Arrives with HTTP 200 and is deterministic, so never retried.
+/// Deterministic 200 OK GraphQL errors are not retried.
 class GraphqlError implements Exception {
   GraphqlError(this.messages);
 
@@ -41,7 +40,6 @@ class GraphqlError implements Exception {
 
 class Cancelled implements Exception {}
 
-/// Drops a request the caller no longer wants, e.g. while typing.
 class CancelToken {
   var _cancelled = false;
 
@@ -60,9 +58,7 @@ final _waiting = <Completer<void>>[];
 final _random = Random();
 
 Future<void> _acquire() async {
-  // The slot is taken before the wait and _release hands it straight on.
-  // Counting up only after the wait would let a caller that arrives between
-  // the handover and the resumed waiter slip past the check.
+  // Acquire before waiting to prevent incoming callers exceeding the limit.
   if (_active >= _maxConcurrent) {
     final turn = Completer<void>();
     _waiting.add(turn);
@@ -78,7 +74,7 @@ Future<void> _acquire() async {
 }
 
 void _release() {
-  // The next in line inherits the slot, so the count stays put.
+  // Transferred directly to next waiter without decrementing active count.
   if (_waiting.isNotEmpty) {
     _waiting.removeAt(0).complete();
     return;
@@ -88,7 +84,6 @@ void _release() {
 
 http.Client _client = http.Client();
 
-/// Swappable for tests.
 void useClient(http.Client client) => _client = client;
 
 Future<Map<String, dynamic>> gql(

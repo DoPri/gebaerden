@@ -31,7 +31,7 @@ void main() {
   late Directory tmp;
 
   setUpAll(() {
-    // Must happen before anything touches the singleton.
+    // Initializes singleton before use.
     FileDownloader(persistentStorage: MemoryStorage());
   });
 
@@ -44,9 +44,7 @@ void main() {
     settings = AppSettings(db);
     await settings.load();
     await initNotifications();
-    // The app widget walks the index on the first start. An empty index ends
-    // that walk at once. A failing one would be retried after a backoff and
-    // that timer outlives the tree these tests tear down.
+    // Empty index completes initial walk immediately without retry timers.
     stubApi({'index': <Object>[]});
   });
 
@@ -69,7 +67,6 @@ void main() {
     await cacheEntries(db, [
       sampleEntry(id: 1, text: 'Hallo', currentVideo: sampleVideo),
     ]);
-    // The reminder counts its own list, so the card has to be in one.
     final list = await createList(db, 'Küche');
     await addToList(db, list.id, [1]);
     await addReminder(
@@ -78,7 +75,6 @@ void main() {
       const Reminder(days: {1, 2, 3, 4, 5, 6, 7}, hour: 19, minute: 0),
     );
     final card = await getOrCreateCard(db, 1, Direction.recognition);
-    // A card that is really due, not a fresh one.
     await db
         .into(db.cards)
         .insertOnConflictUpdate(
@@ -128,7 +124,7 @@ void main() {
     ]);
 
     await boot(tester);
-    // Reading the file is real io, which needs the real clock.
+    // Real async clock required for file I/O.
     for (var i = 0; i < 5; i++) {
       await tester.runAsync(
         () => Future<void>.delayed(const Duration(milliseconds: 100)),
@@ -148,9 +144,8 @@ void main() {
     final list = await createList(db, 'Küche');
     await boot(tester);
 
-    // What the notification hands over once the app is up.
     reminderTapHandler!(list.id);
-    // The hop waits for the next frame and nothing else asks for one here.
+    // Schedules frame to trigger navigation handler.
     tester.binding.scheduleFrame();
     await tester.pumpAndSettle();
 

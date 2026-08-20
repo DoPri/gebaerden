@@ -76,11 +76,8 @@ void main() {
       await cacheEntries(db, [
         sampleEntry(id: 1, text: 'Haus', currentVideo: sampleVideo),
         sampleEntry(id: 2, text: 'Maus', currentVideo: sampleVideo),
-        // Too long.
         sampleEntry(id: 3, text: 'Haushaltsplan', currentVideo: sampleVideo),
-        // Letters the set does not hold.
         sampleEntry(id: 4, text: 'Zug', currentVideo: sampleVideo),
-        // No video.
         sampleEntry(id: 5, text: 'Saum'),
       ]);
 
@@ -100,7 +97,7 @@ void main() {
     tearDown(() => useClient(http.Client()));
 
     test('a mapping with wrong types is resolved again', () async {
-      // An imported backup can carry anything under this key.
+      // Backups may contain malformed setting values.
       await db
           .into(db.settings)
           .insertOnConflictUpdate(

@@ -16,7 +16,6 @@ Map<String, dynamic> _entry(int id, String text) => {
   'currentVideo': sampleVideo.toJson(),
 };
 
-/// Serves [pages] pages and then an empty one, the way the real index ends.
 void _stubIndex({int pages = 2, int per = 2, int firstId = 100}) {
   _stubbed = 0;
   stubPer((body) {
@@ -52,13 +51,11 @@ void main() {
 
     expect(await syncDictionary(db), 6);
     expect(await db.select(db.entries).get(), hasLength(6));
-    // Three pages of entries plus the empty one that ends it.
     expect(_stubbed, 4);
   });
 
   test('the trainer counts the corpus once it is there', () async {
-    // The whole bug: the deck is drawn from the entry cache and nothing ever
-    // filled it, so a fresh install opened Lernen on zero and zero.
+    // Fresh install has empty deck until cache is populated.
     expect((await buildDeck(db)).newCount, 0);
 
     _stubIndex(pages: 2, per: 3);
@@ -79,8 +76,7 @@ void main() {
     stubApiFailure();
 
     expect(await syncDictionaryOnce(db), isFalse);
-    // Nothing was remembered, otherwise one flight without net would cost the
-    // trainer its corpus for good.
+    // Failed sync must not mark dictionary as synced.
     expect(await dictionarySynced(db), isFalse);
 
     _stubIndex();
@@ -90,8 +86,7 @@ void main() {
 
   test('a cache that only saw a browsed word still gets the rest', () async {
     await cacheEntries(db, [sampleEntry(id: 1, text: 'Hallo')]);
-    // Not empty is not the same as complete: counting rows would call this
-    // done and leave the trainer with the one word that was looked up.
+    // Partial cache from browsing does not count as complete sync.
     expect(await dictionarySynced(db), isFalse);
 
     _stubIndex(pages: 2, per: 2);

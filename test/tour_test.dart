@@ -19,7 +19,6 @@ import 'fake_video.dart';
 import 'harness.dart';
 import 'support.dart';
 
-/// The walkthrough on a first start.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -36,8 +35,7 @@ void main() {
     FakeVideoPlayer().install();
     downloads = Downloads(db);
     await initNotifications();
-    // The index walk on the first start ends at once on an empty answer, and
-    // the entry the video step opens comes back as itself.
+    // Stubs empty index to immediately end startup sync, plus entry mock for video step.
     stubApi({
       'index': <Object>[],
       'entry': {'id': 1, 'text': 'Hallo', 'currentVideo': sampleVideo.toJson()},
@@ -50,7 +48,7 @@ void main() {
     await db.close();
   });
 
-  /// A word with a video, so the tour has something to play.
+  /// Seeds cached entry with video for video tour step.
   Future<void> seed() async {
     await cacheEntries(db, [
       sampleEntry(id: 1, text: 'Hallo', currentVideo: sampleVideo),
@@ -136,7 +134,6 @@ void main() {
 
     expect(find.text('Trainer'), findsOneWidget);
     expect(find.byType(SignVideo), findsNothing);
-    // The trainer really is on screen, not just its step.
     expect(find.text('FÄLLIG'), findsOneWidget);
     await drain(tester);
   });
@@ -150,7 +147,6 @@ void main() {
     await boot(tester);
 
     for (final step in tourSteps) {
-      // Listen is a tab label and a screen title as well.
       expect(find.text(step.title), findsWidgets);
       expect(hole(tester), isNotNull, reason: step.title);
       if (step != tourSteps.last) await next(tester);
@@ -168,7 +164,6 @@ void main() {
 
     expect(find.byType(Spotlight), findsNothing);
     expect(await markerSet(), isTrue);
-    // Back where it started, whatever place the last step was in.
     expect(find.text('NACH BUCHSTABE'), findsOneWidget);
     await drain(tester);
   });
@@ -196,7 +191,7 @@ void main() {
   });
 
   testWidgets('Mehr starts the tour over', (tester) async {
-    // Tall enough for the whole of Mehr, so the entry needs no scrolling.
+    // Viewport height avoids scrolling to access tour restart button.
     tester.view.physicalSize = const Size(800, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -212,7 +207,6 @@ void main() {
     expect(find.text('Vier Bereiche'), findsOneWidget);
     expect(await markerSet(), isFalse);
 
-    // Started from Mehr, so that is where it hands the app back.
     await tester.tap(find.text('Überspringen'));
     await tester.pumpAndSettle();
     expect(find.text('Rundgang erneut ansehen'), findsOneWidget);

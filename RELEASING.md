@@ -150,20 +150,14 @@ is trimmed is written where it happens, in that file and in `tools/preview.py`.
 
 ## Settings
 
-Everything the build and the release read comes out of `.env`. Copy the example
-and fill it in:
+Build and release configurations are read from `.env`.
 
 ```bash
 cp .env.example .env
 source .env
 ```
 
-`.env` is gitignored, `.env.example` is not, so the shape of the file is in the
-repository and the passwords are not. Every command below assumes it has been
-sourced.
-
-CI has no `.env`. There the same values arrive as repository secrets, see the
-table at the end.
+CI receives these values as repository secrets (see table below).
 
 ## Once: the signing key
 
@@ -174,41 +168,28 @@ keytool -genkeypair -v \
   -dname "CN=Dominic Prinz, O=DGS Lernen, C=DE"
 ```
 
-`release.jks` does not belong in the repository, `.gitignore` catches `*.jks`.
-For GitHub Actions:
+For GitHub Actions CI:
 
 ```bash
 base64 -w0 release.jks
 ```
 
-Store the result as the secret `ANDROID_KEYSTORE_BASE64`, together with
-`ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD`.
+Store the result as `ANDROID_KEYSTORE_BASE64`, alongside `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD`.
 
-For Play this key is the upload key. Google keeps the app signing key itself
-and re-signs every bundle, which is why a Play install carries a different
-signature from a GitHub one.
+Google Play manages the final app signing key and re-signs bundles, resulting in different signatures between Play and GitHub installs.
 
 ## Once: Google Play
 
-The API cannot create an app, so the first release goes through the console by
-hand. Create the app, work through the set-up checklist, upload one
-bundle so Play App Signing is set up, then create the closed testing track and
-put testers on it. `supply` creates the track object on upload but cannot
-invite anyone, and a closed test without testers counts towards nothing.
-
-After that the uploads are automatic, which needs a service account. Flutter's
-deployment guide covers it and hands off to the fastlane steps:
-
+The first release requires manual upload via the Google Play Console to establish Play App Signing and the closed testing track. Subsequent uploads are automated via a service account, as detailed in:
 - <https://docs.flutter.dev/deployment/cd>
 - <https://docs.fastlane.tools/getting-started/android/setup/>
 
-Short version: create a service account with a JSON key in the Google Cloud
-project behind the app, invite it in the Play Console under Users and
-permissions and give it release rights. For CI, store the whole JSON as the
-secret `PLAY_SERVICE_ACCOUNT`.
+1. Create a service account in the Google Cloud project.
+2. Grant it release rights in the Play Console.
+3. Save the JSON key.
+4. Store the JSON as the `PLAY_SERVICE_ACCOUNT` secret for CI, or point `PLAY_SERVICE_ACCOUNT_FILE` in `.env` to the local file.
 
-Locally there is a second way that needs no key on disk. `gcloud` comes with
-the toolchain, `mise install` puts it there:
+Alternatively, use `gcloud` locally:
 
 ```bash
 gcloud auth application-default login --scopes=openid,email,\
@@ -216,35 +197,22 @@ https://www.googleapis.com/auth/cloud-platform,\
 https://www.googleapis.com/auth/androidpublisher
 ```
 
-`cloud-platform` is in there because gcloud turns the login down without it.
-`supply` picks the result up on its own. With `PLAY_SERVICE_ACCOUNT_FILE` set
-in `.env` the key wins, without it gcloud does.
-
-Check it before relying on it:
+Verify credentials and pending release metadata:
 
 ```bash
 bundle exec fastlane android check
 ```
 
-That resolves the credentials and validates an upload without shipping
-anything. It also reports what a release would do: the versionCode it read out
-of `pubspec.yaml`, whether the listing texts differ from the ones Play holds
-and whether a changelog for that versionCode exists.
-
 ## Raising the version
 
-`version:` in `pubspec.yaml`, format `1.0.0+1`. The part before the plus is the
-versionName, the part after it the versionCode. Play refuses a versionCode it
-has already seen, so it goes up on every release.
+Update `version:` in `pubspec.yaml` (format `1.0.0+1`). Play requires a monotonically increasing `versionCode` (the number after the plus).
 
-Add the changelog for the new versionCode in both locales:
+Add changelogs for the new versionCode:
 
 ```
 fastlane/metadata/android/de-DE/changelogs/<versionCode>.txt
 fastlane/metadata/android/en-US/changelogs/<versionCode>.txt
 ```
-
-Without it `supply` has nothing to show on the Play release.
 
 ## Release
 
@@ -253,105 +221,62 @@ git tag v1.0.1
 git push origin v1.0.1
 ```
 
-The workflow runs the full CI check, builds the bundle and the split APKs,
-attaches the APKs to the GitHub release and uploads the bundle to Play closed
-testing. The tag has to match `version:` in `pubspec.yaml` or the run stops
-before building.
+The workflow runs checks, builds APKs and the bundle, attaches APKs to the GitHub release, and uploads the bundle to Play closed testing. The tag must match `version:` in `pubspec.yaml`.
 
-Nothing reaches production on its own. Promoting from internal testing through
-closed and open to production is a click in the Play Console, on purpose: a
-Play release can be halted but not taken back.
+Promoting releases to production requires manual action in the Play Console.
 
 ## Checking a download
 
-Every APK and the bundle carry a build provenance attestation. It records which
-workflow, which commit and which run produced the file, signed through Sigstore
-with a short-lived identity, so there is no key of ours to lose.
-
-Anyone can check a downloaded file:
+Every APK and bundle carries a build provenance attestation signed via Sigstore.
 
 ```bash
 gh attestation verify app-arm64-v8a-release.apk --repo DoPri/gebaerden
 ```
 
-That only proves the file came out of this repository's workflow. It says
-nothing about the signing certificate of the APK, which is a separate matter
-and differs per channel.
-
 ## Testing a release
 
-A tag carrying a suffix is a pre-release on GitHub. It goes to Play the same
-way every other tag does.
+Tags with a suffix indicate pre-releases:
 
 ```bash
 git tag v1.0.1-rc1
 git push origin v1.0.1-rc1
 ```
 
-Testers on Obtainium get it if they allow pre-releases, everyone else can grab
-the APK from the release page. The suffix belongs in `version:` in
-`pubspec.yaml` as well, because the workflow checks that the two match.
-
-Testers with a Google account get it through closed testing instead, once the
-review is through.
-
-The bundle is kept as a workflow artifact for 14 days, so a failed Play upload
-can be retried by hand without building again.
+Pre-releases skip Play store but are attached to the GitHub release. Obtainium testers receive them if configured to allow pre-releases.
 
 ## Changing only the listing
 
-Texts, the video link, screenshots or the feature graphic without a new
-build:
+To update store metadata, screenshots, or the video link without a new build:
 
 ```bash
 bundle exec fastlane android listing
 ```
 
-This needs a release to exist already. `supply` hangs the listing off a release
-and offers no way around it, so on a fresh app the first push has to be the
-`closed` lane, which carries a bundle. After that the listing lane works on
-its own.
-
-Only what differs goes up, on this lane and on the release. Every image is
-compared by checksum against the one Play holds, and the four texts are
-compared against the live listing before anything is sent, so a run that
-changes nothing uploads nothing.
-
-F-Droid picks the same change up on its next build of this repository.
+Only differing files and texts are uploaded. F-Droid applies the same metadata on its next build.
 
 ## Building locally
 
-`tools/release.sh` is enough to try it out. On the first run the script creates
-a throwaway key and builds signed APKs with it. That key is no good for a real
-release.
+Use `tools/release.sh` to test builds with a throwaway key.
 
-By hand, with `.env` sourced:
+To build manually (requires `.env`):
 
 ```bash
 flutter build appbundle --release
 flutter build apk --release --split-per-abi
 ```
 
-Without the keystore variables the artefacts stay unsigned. That is intended, F-Droid
-signs with a key of its own.
+Without keystore variables, artifacts remain unsigned (expected for F-Droid).
 
 ## F-Droid (untested)
 
-Copy `fdroid/gg.prinz.gebaerden.yml` into `metadata/` in a fork of `fdroiddata`
-and check it:
+Copy `fdroid/gg.prinz.gebaerden.yml` to `metadata/` in a fork of `fdroiddata`:
 
 ```bash
 fdroid readmeta
 fdroid build gg.prinz.gebaerden:1
 ```
 
-Flutter arrives there through a srclib. Reproducibility is fiddly with Flutter,
-because build paths end up in the binary. The recipe is written but has not
-been built, there is no `fdroidserver` here.
-
-`dependenciesInfo` is switched off in `android/app/build.gradle.kts` because
-F-Droid rejects the Google-signed dependency metadata. Play accepts a bundle
-without it and only loses the dependency advisories in the console.
+`dependenciesInfo` is disabled in `android/app/build.gradle.kts` as F-Droid rejects Google-signed dependency metadata. Play accepts the bundle without it.
 
 ## Settings in one place
 

@@ -8,19 +8,19 @@ import '../db/database.dart';
 import '../db/lists.dart';
 import '../util/time.dart';
 
-/// Fuzz on, or a big batch all falls due the same day.
+// Scheduler fuzzes review intervals to prevent synchronized due dates.
 final _scheduler = f.Scheduler();
 
 final _random = Random();
 
 const grades = [f.Rating.again, f.Rating.hard, f.Rating.good, f.Rating.easy];
 
-/// Beyond this a card costs more time than it returns.
+// Threshold above which failing cards are suspended as leeches.
 const leechLapses = 8;
 
 String cardId(int entryId, Direction direction) => '$entryId:${direction.name}';
 
-/// dart-fsrs has no New state.
+// dart-fsrs lacks a dedicated New state; stability null indicates new cards.
 bool isNew(StoredCard card) => card.stability == null;
 
 StoredCard newCard(int entryId, Direction direction, DateTime now) =>
@@ -36,7 +36,7 @@ StoredCard newCard(int entryId, Direction direction, DateTime now) =>
       suspended: false,
     );
 
-/// dart-fsrs dereferences stability once a card is past learning.
+// Maps new cards to initial learning state to satisfy dart-fsrs expectations.
 f.Card _toFsrs(StoredCard card) => f.Card(
   cardId: card.entryId,
   state: isNew(card) ? f.State.learning : f.State.fromValue(card.state),
@@ -47,7 +47,7 @@ f.Card _toFsrs(StoredCard card) => f.Card(
   lastReview: card.lastReview?.toUtc(),
 );
 
-/// The default rounds timestamps to milliseconds.
+// Serializes DateTime as ISO strings to prevent timestamp truncation.
 final _exact = ValueSerializer.defaults(serializeDateTimeValuesAsString: true);
 
 StoredCard _merge(
@@ -88,7 +88,6 @@ class DeckOptions {
     this.now,
   });
 
-  /// Null means the whole local cache.
   final List<int>? entryIds;
   final List<Direction> directions;
   final int newLimit;
@@ -108,7 +107,7 @@ class Deck {
   final int newCount;
 }
 
-/// Without video and already known are both out.
+// Filters out known cards and entries lacking video footage.
 Future<List<int>> _candidates(AppDatabase db, DeckOptions opts) async {
   final query = db.selectOnly(db.entries)..addColumns([db.entries.id]);
   query.where(
@@ -129,7 +128,7 @@ Future<Deck> buildDeck(
   final now = opts.now ?? DateTime.now();
   final entryIds = await _candidates(db, opts);
 
-  // Cheaper than one lookup per candidate, most hold no row at all.
+  // Batch lookup avoids N+1 queries for missing card rows.
   final stored = {
     for (final card in await db.select(db.cards).get()) card.id: card,
   };
@@ -148,7 +147,7 @@ Future<Deck> buildDeck(
         continue;
       }
 
-      // Reservoir sampling, so no thousands of cards get built and dropped.
+      // Reservoir sampling avoids instantiating excess candidate cards.
       final seen = newCount++;
       final slot = seen < opts.newLimit ? seen : _random.nextInt(newCount);
       if (slot >= opts.newLimit) continue;
@@ -207,7 +206,7 @@ Future<StoredCard> gradeCard(
   return updated;
 }
 
-/// dart-fsrs has no rollback, so the review row carries the old card.
+/// Review logs store prior card snapshots because dart-fsrs lacks undo support.
 Future<StoredCard?> undoLast(AppDatabase db) async {
   final last =
       await (db.select(db.reviews)
@@ -235,8 +234,7 @@ class TodayCount {
   final int fresh;
 }
 
-/// The review log is the counter, no extra bookkeeping.
-/// [entryIds] narrows the count to one list, so its budget is its own.
+/// Derives review counts and new card progress directly from review logs.
 Future<TodayCount> reviewedToday(
   AppDatabase db, {
   List<int>? entryIds,
@@ -262,7 +260,6 @@ Future<TodayCount> reviewedToday(
   return TodayCount(total: logs.length, fresh: fresh);
 }
 
-/// Labels under the answer buttons.
 Map<f.Rating, String> previewIntervals(StoredCard card, [DateTime? now]) {
   final at = (now ?? DateTime.now()).toUtc();
   final base = _toFsrs(card);

@@ -4,7 +4,7 @@ import 'dart:math';
 import 'client.dart';
 import 'types.dart';
 
-/// Server caps at 100.
+/// Upstream API limit.
 const pageSize = 100;
 
 const letters = [
@@ -12,7 +12,7 @@ const letters = [
   'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
 ];
 
-/// Starting guess for the tail. Only ages upwards.
+/// Initial estimate of total index pages.
 const indexPages = 53;
 
 const _videoFields = '''
@@ -47,7 +47,7 @@ Future<List<ApiEntry>> searchWord(String word, {CancelToken? cancel}) async {
   return _entries(data['search']);
 }
 
-/// Upstream folds Ä/Ö/Ü onto A. The filter guards against that.
+/// Upstream folds umlauts onto base vowels.
 Future<List<ApiEntry>> searchLetter(
   String letter, {
   CancelToken? cancel,
@@ -73,13 +73,12 @@ Future<ApiEntry?> fetchEntry(int id, {CancelToken? cancel}) async {
     final entry = data['entry'] as Map<String, dynamic>?;
     return entry == null ? null : ApiEntry.fromJson(entry);
   } on GraphqlError catch (err) {
-    // A deleted or mistyped id is an answer, not a failure.
+    // Missing entries return null instead of throwing.
     if (err.notFound) return null;
     rethrow;
   }
 }
 
-/// Many ids in one round trip.
 Future<List<ApiEntry>> fetchEntries(
   List<int> ids, {
   CancelToken? cancel,
@@ -97,8 +96,7 @@ Future<List<ApiEntry>> fetchEntries(
   ];
 }
 
-/// Exact word to id in one round trip. Asks for id and text only, the full
-/// fields would balloon the response since search matches substrings.
+/// Requests minimal fields to avoid oversized responses on substring matches.
 Future<Map<String, int>> resolveExact(
   List<String> words, {
   CancelToken? cancel,
@@ -133,7 +131,7 @@ Future<List<ApiEntry>> fetchIndexPage(int page, {CancelToken? cancel}) async {
   return _entries(data['index']);
 }
 
-/// Only complete view. Letter search misses ~600 entries.
+/// Letter search misses ~600 entries upstream.
 Stream<List<ApiEntry>> iterateIndex({CancelToken? cancel}) async* {
   for (var page = 1; ; page++) {
     final batch = await fetchIndexPage(page, cancel: cancel);
@@ -142,7 +140,6 @@ Stream<List<ApiEntry>> iterateIndex({CancelToken? cancel}) async* {
   }
 }
 
-/// Walks from a hint to the last page that still holds entries.
 Future<int> lastIndexPage({int hint = indexPages, CancelToken? cancel}) async {
   var page = max(1, hint);
 

@@ -4,7 +4,7 @@ import 'package:drift/drift.dart';
 
 import 'database.dart';
 
-/// ~38% of the corpus has no footage.
+// Sets hasVideo flag; ~38% of corpus lacks footage.
 EntriesCompanion toCached(ApiEntry entry) {
   final videos = entry.videos;
   final current =
@@ -24,19 +24,14 @@ EntriesCompanion toCached(ApiEntry entry) {
   );
 }
 
-/// Counts writes to the entry cache. The offline index keys off it, the write
-/// below is an upsert and can change a word under a standing id, which no row
-/// count would show.
+/// Tracks cache updates since upserts alter rows without changing total row count.
 int entriesRevision = 0;
 
-/// Fires after every write to the entry cache. The trainer takes its counts
-/// once, when the tab is built. On a fresh install the dictionary only lands
-/// afterwards, in the background, and the tab would otherwise keep showing the
-/// zero it read before the first page arrived.
+/// Notifies listeners on cache writes to update initial counts loaded before background sync.
 final _entryWrites = StreamController<int>.broadcast();
 Stream<int> get entryWrites => _entryWrites.stream;
 
-/// Keeps detail videos when a list response overwrites the row.
+/// Preserves existing detail videos when list responses lack full video lists.
 Future<List<CachedEntry>> cacheEntries(
   AppDatabase db,
   List<ApiEntry> entries,
@@ -76,7 +71,7 @@ Future<List<CachedEntry>> getEntries(AppDatabase db, List<int> ids) async {
   final rows = await (db.select(
     db.entries,
   )..where((t) => t.id.isIn(ids))).get();
-  // Callers expect their own order back.
+  // Preserves caller-specified ID ordering.
   final byId = {for (final row in rows) row.id: row};
   return [
     for (final id in ids)

@@ -1,4 +1,4 @@
-// drift also exports Column and Table, which mean widgets here.
+// Avoid name collision with Flutter widgets.
 import 'package:drift/drift.dart' hide Column, Table;
 import 'package:flutter/material.dart';
 
@@ -195,9 +195,7 @@ class _Jobs extends StatelessWidget {
     final c = context.colors;
 
     return StreamBuilder<List<StoredPackage>>(
-      // error belongs here too. Without it, a package that lost a file dropped
-      // out of the list and looked as if the download had simply stopped,
-      // with no way left to send it off again.
+      // Include error status so failed downloads can be retried.
       stream:
           (db.select(db.packages)..where(
                 (t) =>

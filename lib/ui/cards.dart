@@ -44,8 +44,6 @@ class CardProps {
   final CachedEntry entry;
   final StoredCard card;
   final ApiVideo? video;
-
-  /// Distractors are drawn from here.
   final List<CachedEntry> pool;
   final void Function(f.Rating) onAnswer;
 }
@@ -307,7 +305,6 @@ class _TypingCardState extends State<TypingCard> {
             onSubmitted: (_) => _submit(),
             decoration: InputDecoration(
               hintText: 'Wort eintippen',
-              // Green or red once checked, the theme handles the rest.
               enabledBorder: _right == null ? null : outline(tint),
               focusedBorder: _right == null ? null : outline(tint),
               disabledBorder: _right == null ? null : outline(tint),

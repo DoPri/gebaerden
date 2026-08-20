@@ -3,10 +3,9 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../theme.dart';
 
-/// Android needs at least this much (and it is easier to hit this way).
+// Android minimum touch target requirement.
 const minTap = 48.0;
 
-/// Flat pressed state instead of a ripple.
 class Tappable extends StatelessWidget {
   const Tappable({
     required this.child,
@@ -48,7 +47,6 @@ class SectionLabel extends StatelessWidget {
   }
 }
 
-/// Filled for the one action a screen is about.
 class AppButton extends StatelessWidget {
   const AppButton({
     required this.label,
@@ -168,7 +166,6 @@ class ChoiceRow<T> extends StatelessWidget {
   }
 }
 
-/// Empty and failed states.
 class Note extends StatelessWidget {
   const Note(this.text, {this.problem = false, super.key});
 
@@ -195,7 +192,6 @@ class Note extends StatelessWidget {
 Widget insetSides(Widget child) =>
     SafeArea(top: false, bottom: false, child: child);
 
-/// For the few fields that color their border by state.
 OutlineInputBorder outline(Color color) => OutlineInputBorder(
   borderRadius: BorderRadius.circular(4),
   borderSide: BorderSide(color: color),
@@ -235,7 +231,6 @@ class LinkText extends StatelessWidget {
   }
 }
 
-/// Hands the link to the browser. Nothing in the app opens a web view.
 Future<void> launchExternal(String url) async {
   await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
 }
@@ -267,7 +262,7 @@ class WordChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
             border: Border.all(color: c.border),
           ),
-          // widthFactor keeps the chip as narrow as its word.
+          // Prevents Center from expanding horizontally.
           child: Center(
             widthFactor: 1,
             child: Text(

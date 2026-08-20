@@ -20,14 +20,12 @@ final rootKey = GlobalKey<NavigatorState>();
 GoRouter buildRouter(AppDatabase db) {
   return GoRouter(
     navigatorKey: rootKey,
-    // Without one of these go_router puts the raw exception on screen, which
-    // any typed address on the web reaches.
+    // Prevents go_router from rendering unhandled route exceptions on web.
     errorBuilder: (_, _) => const _NoRoute(),
     routes: [
       GoRoute(
         parentNavigatorKey: rootKey,
-        // Digits only. On the web the address bar is a way in of its own and
-        // int.parse in the builder throws where nothing catches it.
+        // Regex constraint prevents int.parse throwing on invalid web URLs.
         path: r'/eintrag/:id(\d+)',
         builder: (_, state) =>
             EntryScreen(db: db, id: int.parse(state.pathParameters['id']!)),
@@ -49,8 +47,7 @@ GoRouter buildRouter(AppDatabase db) {
         path: '/neu',
         builder: (_, _) => NewestScreen(db: db),
       ),
-      // On the web the address bar is a way in of its own and the screen
-      // would offer packages that no queue picks up.
+      // Disable offline route on web where download queues are unsupported.
       if (downloadsAvailable)
         GoRoute(
           parentNavigatorKey: rootKey,
@@ -131,8 +128,7 @@ class _NoRoute extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Note('Diese Adresse gibt es nicht.', problem: true),
-            // go, not push. The dictionary sits in the tab shell and pushing
-            // that on top of itself reuses its navigator.
+            // Use go() to reset tab shell state instead of pushing duplicate routes.
             AppButton(
               label: 'Zum Wörterbuch',
               icon: Icons.menu_book_outlined,

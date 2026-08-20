@@ -24,7 +24,6 @@ import 'fake_video.dart';
 import 'harness.dart';
 import 'support.dart';
 
-/// Everything that only happens once a route is pushed.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -33,7 +32,7 @@ void main() {
   late GoRouter router;
 
   setUpAll(() {
-    // Must happen before anything touches the singleton.
+    // Required before accessing FileDownloader singleton.
     FileDownloader(persistentStorage: MemoryStorage());
   });
 
@@ -212,7 +211,7 @@ void main() {
       await tester.tap(find.text('Diese Liste lernen'));
       await settle(tester);
 
-      // The lobby leads with the scope, so the button sits below the fold.
+      // Scroll required because lobby scope header pushes button below fold.
       await tester.scrollUntilVisible(
         find.text('Loslegen'),
         200,

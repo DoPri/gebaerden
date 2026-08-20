@@ -9,7 +9,6 @@ import '../../settings.dart';
 import '../../theme.dart';
 import 'pieces.dart';
 
-/// The reminders of one list. A reminder belongs to exactly one list.
 class ReminderPanel extends StatefulWidget {
   const ReminderPanel({required this.db, required this.listId, super.key});
 
@@ -35,8 +34,7 @@ class _ReminderPanelState extends State<ReminderPanel> {
     if (mounted) setState(() => _reminders = rows);
   }
 
-  /// Every alarm on the device is rewritten, not just this list's. They share
-  /// one run of ids and scheduling only part of them would drop the rest.
+  // Rewrites all device alarms because IDs are shared globally.
   Future<void> _apply({bool ask = true}) async {
     await _load();
     if (!mounted) return;
@@ -51,7 +49,7 @@ class _ReminderPanelState extends State<ReminderPanel> {
       return;
     }
 
-    // Only a fresh reminder may prompt. Editing one must not re-ask.
+    // Only prompt for permissions on initial creation.
     var ok = true;
     if (ask) {
       ok = await scheduleReminders(due);
@@ -107,7 +105,7 @@ class _ReminderPanelState extends State<ReminderPanel> {
   Future<void> _toggle(ScopedReminder scoped, int day) async {
     final days = {...scoped.reminder.days};
     if (!days.remove(day)) days.add(day);
-    // The last day cannot go, an alarm without a day never fires.
+    // Require at least one active day.
     if (days.isEmpty) return;
 
     await setReminder(

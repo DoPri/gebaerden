@@ -111,7 +111,7 @@ class _Toggle extends StatelessWidget {
   }
 }
 
-/// Watches the asset rows, the download finishes long after the tap.
+// Stream asset rows because downloads finish asynchronously.
 class OfflineToggle extends StatefulWidget {
   const OfflineToggle({required this.db, required this.entry, super.key});
 

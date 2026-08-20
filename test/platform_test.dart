@@ -21,7 +21,7 @@ void main() {
   late FakeChannels channels;
 
   setUpAll(() {
-    // Must happen before anything touches the singleton.
+    // Required before accessing FileDownloader singleton.
     FileDownloader(persistentStorage: MemoryStorage());
   });
 
@@ -35,9 +35,7 @@ void main() {
     await db.close();
   });
 
-  // The reminder plugin resolves its implementation from dart:io, so it cannot
-  // load on the host at all. Its pure parts live in notify_test.dart, the rest
-  // is checked in integration_test.
+  // Reminder plugin requires dart:io platform implementation not testable on host.
 
   group('network status', () {
     test('starts from what the platform reports', () async {
@@ -110,7 +108,6 @@ void main() {
       downloads = Downloads(db);
       await downloads.startPackage(EntryPackage(rows.single.id, 'Zug'));
 
-      // Only the thumbnail is left to fetch.
       final row = await (db.select(
         db.packages,
       )..where((t) => t.id.equals('entry:835'))).getSingle();
@@ -246,7 +243,6 @@ void main() {
       final row = await (db.select(
         db.packages,
       )..where((t) => t.id.equals('letter:B'))).getSingle();
-      // Only Baum starts with B, so two files.
       expect(row.total, 2);
     });
 
@@ -296,7 +292,6 @@ void main() {
       ]);
       downloads = Downloads(db);
 
-      // Nothing stored yet, so nothing to refresh.
       await refreshDownloadFor(db, rows.single.id);
       expect(
         await (db.select(

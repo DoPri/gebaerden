@@ -22,7 +22,6 @@ void main() {
 
     test('a leftover from the last run is taken down', () async {
       channels.active = [
-        // A reminder and a download. Only the download belongs to us.
         {'id': 3, 'title': 'Gebärden üben'},
         {'id': 1234, 'title': 'Alle Gebärden'},
       ];
@@ -138,7 +137,7 @@ void main() {
     });
 
     test('keeps the hour across the spring change', () {
-      // Berlin moves to summer time on 29 March 2026, a Saturday to Sunday.
+      // DST transition in Berlin.
       final now = tz.TZDateTime(tz.local, 2026, 3, 28, 10);
       final next = nextOccurrence((hour: 8, minute: 0), now: now);
       expect(next.day, 29);
@@ -146,7 +145,7 @@ void main() {
     });
 
     test('keeps the hour across the autumn change', () {
-      // And back to winter time on 25 October 2026.
+      // DST return to standard time.
       final now = tz.TZDateTime(tz.local, 2026, 10, 24, 10);
       final next = nextOccurrence((hour: 8, minute: 0), now: now);
       expect(next.day, 25);
@@ -214,7 +213,6 @@ void main() {
 
   group('the next occurrence on a weekday', () {
     test('is the coming one when it is still ahead', () {
-      // 7 August 2026 is a Friday.
       final now = tz.TZDateTime(tz.local, 2026, 8, 7, 9);
       final next = nextOccurrence((hour: 19, minute: 0), weekday: 6, now: now);
       expect(next.weekday, DateTime.saturday);
@@ -229,15 +227,14 @@ void main() {
     });
 
     test('a day nobody has still comes to an end', () {
-      // parseReminders keeps the days inside 1..7, the bound is the net under
-      // that. Without it the search would spin forever.
+      // Bounds search to prevent infinite loop on invalid weekdays.
       final now = tz.TZDateTime(tz.local, 2026, 8, 7, 9);
       final next = nextOccurrence((hour: 8, minute: 0), weekday: 9, now: now);
       expect(next.isAfter(now), isTrue);
     });
 
     test('keeps the hour when the search crosses the clock change', () {
-      // Saturday, with Monday on the far side of the change.
+      // Crosses spring DST transition.
       final now = tz.TZDateTime(tz.local, 2026, 3, 28, 10);
       final next = nextOccurrence((hour: 8, minute: 0), weekday: 1, now: now);
       expect(next.weekday, DateTime.monday);

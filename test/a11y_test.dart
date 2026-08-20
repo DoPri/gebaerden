@@ -60,8 +60,7 @@ void main() {
         await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
       });
 
-      // Whatever the picker hands over has to stay readable. The suggestions
-      // carry German names on screen, so the hex is what names the case here.
+      // Tests contrast against default suggestions and extreme edge-case accents.
       for (final color in [
         ...suggestedAccents.map((accent) => accent.$1),
         0xFFFFFFFF,

@@ -76,7 +76,7 @@ void main() {
     });
 
     test('half a unit stays in the smaller one', () {
-      // Rounded these read "vor 1 Monat" and "vor 1 Jahr", which is a lie.
+      // Avoid rounding up to larger unit before threshold.
       expect(relativeTime('2026-07-22 12:00:00', now), 'vor 2 Wochen');
       expect(relativeTime('2026-02-07 12:00:00', now), 'vor 6 Monaten');
     });

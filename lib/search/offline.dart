@@ -16,9 +16,7 @@ List<_Indexed>? _index;
 AppDatabase? _indexed;
 int? _stamp;
 
-/// Rebuilt after every write to the cache. A row count would miss a word that
-/// changed under a standing id, and the database it was built from has to be
-/// the same one, tests swap that underneath.
+// Rebuilds search cache on entriesRevision or database instance changes.
 Future<List<_Indexed>> _ensureIndex(AppDatabase db) async {
   final current = _index;
   if (current != null && identical(_indexed, db) && _stamp == entriesRevision) {
@@ -44,14 +42,12 @@ Future<List<_Indexed>> _ensureIndex(AppDatabase db) async {
   return next;
 }
 
-/// For tests, which swap the database underneath.
 void invalidateIndex() {
   _index = null;
   _indexed = null;
   _stamp = null;
 }
 
-/// Bounded edit distance, bails out once a row exceeds the budget.
 int _distance(String a, String b, int budget) {
   if ((a.length - b.length).abs() > budget) return budget + 1;
 
@@ -69,7 +65,7 @@ int _distance(String a, String b, int budget) {
         previous[j - 1] + cost,
       );
 
-      // Two swapped letters are one typo, not two. Arbiet has to find Arbeit.
+      // Treats adjacent transposition as a single edit (Damerau-Levenshtein).
       if (i > 1 &&
           j > 1 &&
           a.codeUnitAt(i - 1) == b.codeUnitAt(j - 2) &&
@@ -87,7 +83,7 @@ int _distance(String a, String b, int budget) {
   return previous[b.length];
 }
 
-/// 5291 entries fit in memory, a scan beats holding an index.
+// Performs in-memory scan over full corpus to support typo-tolerant matching.
 Future<List<CachedEntry>> offlineSearch(
   AppDatabase db,
   String query, {

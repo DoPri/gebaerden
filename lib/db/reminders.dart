@@ -5,8 +5,6 @@ import '../srs/scheduler.dart';
 import 'database.dart';
 import 'lists.dart';
 
-/// A reminder plus the list it belongs to, which is what scheduling needs to
-/// count the right cards and to route a tap.
 class ScopedReminder {
   const ScopedReminder({
     required this.id,
@@ -30,8 +28,7 @@ Reminder _from(StoredReminder row) => Reminder(
 
 String _days(Set<int> days) => (days.toList()..sort()).join();
 
-/// Every reminder on the device, in a stable order so the alarm ids do not
-/// shuffle between two writes.
+/// Returns reminders in deterministic order to preserve alarm IDs across updates.
 Future<List<ScopedReminder>> allReminders(AppDatabase db) async {
   final rows =
       await (db.select(db.reminders)..orderBy([
@@ -88,8 +85,7 @@ Future<void> removeReminder(AppDatabase db, int id) async {
   await (db.delete(db.reminders)..where((t) => t.id.equals(id))).go();
 }
 
-/// Every reminder with the count of its own list, which is what the text says.
-/// Counted once per list, several reminders on one list share the number.
+/// Calculates due counts once per list across all reminders.
 Future<List<DueReminder>> dueReminders(
   AppDatabase db,
   List<Direction> directions,

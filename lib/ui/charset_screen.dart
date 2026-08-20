@@ -27,12 +27,10 @@ class _CharsetScreenState extends State<CharsetScreen> {
   String? _error;
   var _busy = true;
 
-  // Reading drill.
   String? _asked;
   List<String> _options = [];
   String? _picked;
 
-  // Spelling drill.
   String? _word;
   List<String> _letters = [];
   var _step = 0;

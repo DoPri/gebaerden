@@ -31,7 +31,7 @@ void main() {
     });
 
     testWidgets('a letter stays a small tile on a wide window', (tester) async {
-      // Six columns fixed meant one letter per fifth of a desktop window.
+      // Ensures grid does not stretch excessively on desktop widths.
       tester.view.physicalSize = const Size(1440, 900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -144,8 +144,7 @@ void main() {
   });
 
   group('the newest entries', () {
-    // Without the hint the walk down from the built in page count needs more
-    // pumps than a widget test should spend.
+    // Seeds lastPage to prevent excessive pump cycles during index walk.
     Future<void> hint(int page) => db
         .into(db.settings)
         .insertOnConflictUpdate(

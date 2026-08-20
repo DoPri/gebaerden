@@ -32,7 +32,7 @@ void main() {
     db: db,
     entry: pool.first,
     card: newCard(1, direction, DateTime.now()),
-    // No video, so no platform channel is needed.
+    // Avoids platform channel setup.
     video: null,
     pool: pool,
     onAnswer: (rating) => answered = rating,
@@ -237,7 +237,6 @@ void main() {
       await tester.pumpWidget(await harness(db, ChoiceCard(props())));
       await tester.pumpAndSettle();
 
-      // Only what the pool holds, never a made up answer.
       expect(find.text('Haus'), findsOneWidget);
       expect(find.text('Baum'), findsOneWidget);
     });

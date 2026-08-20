@@ -4,27 +4,14 @@ Status: accepted
 
 ## Context
 
-The app ships no dictionary of its own. Every sign, every video and every
-license line comes from signdict.org, which is run by volunteers. The corpus
-changes upstream, entries are added and single files go missing.
+The app uses signdict.org for all signs and videos. Upstream corpus changes frequently.
 
 ## Decision
 
-The GraphQL endpoint is the only source. Metadata is cached in the local
-database, footage is downloaded on request. The client holds at most four
-requests in flight with a 60 millisecond gap between them.
+The GraphQL endpoint is the single source of truth. Metadata is cached locally; videos are downloaded on request. Network client limits concurrency to four requests with 60ms delays.
 
-`integration_test/` runs on a device against the live endpoint and checks that
-it still answers the way the app expects. `test/` never touches the network.
+Integration tests verify API contracts. Unit tests run offline.
 
 ## Consequences
 
-A first start needs a connection. Everything already cached or downloaded keeps
-working without one.
-
-A 403 on a single thumbnail is normal and must not fail a whole package,
-otherwise the job disappears from the offline list and the download looks like
-it stopped.
-
-A schema change upstream surfaces in the integration tests rather than on a
-phone.
+A network connection is required on first launch. Cached data remains available offline. Missing thumbnails return 403s and do not fail the parent package.

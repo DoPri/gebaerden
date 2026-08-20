@@ -59,8 +59,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 200));
     });
     await tester.pumpAndSettle();
-    // The picker asks what goes into the file. Its button carries the same
-    // word, so take the one inside the dialog.
+    // Targets modal dialog button over matching screen button.
     await tester.runAsync(() async {
       await tester.tap(find.text('Exportieren').last);
       await Future<void>.delayed(const Duration(milliseconds: 200));
@@ -95,7 +94,6 @@ void main() {
     final file = File('${tmp.path}/sicherung.json')
       ..writeAsStringSync(await exportBackup(source));
     channels.pick = file.path;
-    // The words behind the progress are pulled back in right after.
     stubPer(
       (_) => {
         'e0': {'id': 1, 'text': 'Hallo', 'currentVideo': sampleVideo.toJson()},
@@ -166,7 +164,6 @@ void main() {
 
     await tester.tap(find.text('Lernstand und Verlauf'));
     await tester.pumpAndSettle();
-    // Off and on again, only what stays unticked is left out.
     await tester.tap(find.text('Listen und Wörter'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Listen und Wörter'));
@@ -219,8 +216,7 @@ void main() {
       f.Rating.good,
     );
 
-    // Both words sit in the cache here, so the import has nothing to fetch
-    // and the test stays off the network.
+    // Pre-populates cache to avoid network requests during import.
     await cacheEntries(db, [
       sampleEntry(id: 1, text: 'Hallo', currentVideo: sampleVideo),
       sampleEntry(id: 2, text: 'Tschüss', currentVideo: sampleVideo),
@@ -242,7 +238,6 @@ void main() {
     });
     await tester.pumpAndSettle();
 
-    // The mode sits in the picker now.
     await tester.tap(find.text('Ersetzen'));
     await tester.pumpAndSettle();
     await tester.runAsync(() async {
@@ -251,7 +246,6 @@ void main() {
     });
     await tester.pumpAndSettle();
 
-    // Merge would have kept the local card next to the imported one.
     expect((await db.select(db.cards).get()).map((c) => c.entryId), [2]);
     await drain(tester);
   });

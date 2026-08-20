@@ -12,8 +12,7 @@ ImageProvider localImage(String path) => FileImage(File(path));
 VideoPlayerController localVideo(String path) =>
     VideoPlayerController.file(File(path));
 
-/// A file for the share sheet. Everything that shares text writes it to the
-/// cache first, the sheet takes a path and nothing else.
+// Share sheet requires a cached file path.
 Future<XFile> textFile(String name, String text) async {
   final dir = await getTemporaryDirectory();
   final file = File('${dir.path}/$name');

@@ -4,7 +4,6 @@ import '../db/database.dart';
 import '../platform/local.dart';
 import 'variants.dart';
 
-/// A downloaded copy wins over the CDN.
 class MediaSource {
   const MediaSource.file(String this.path) : url = null;
   const MediaSource.network(String this.url) : path = null;
@@ -36,13 +35,12 @@ Future<MediaSource?> resolveMedia(
   final remote = kind == AssetKind.video ? video.videoUrl : video.thumbnailUrl;
 
   final local = (await _localPaths(db, [video.id], kind))[video.id];
-  // A row can outlive the file.
+  // Verifies file exists on disk before resolving as local source.
   if (local != null && localExists(local)) return MediaSource.file(local);
 
   return remote == null ? null : MediaSource.network(remote);
 }
 
-/// Honors the selected variant.
 Future<Map<int, MediaSource>> thumbnailsFor(
   AppDatabase db,
   List<CachedEntry> entries,

@@ -30,7 +30,6 @@ import 'fake_video.dart';
 import 'harness.dart';
 import 'support.dart';
 
-/// The corners the ordinary walk through the app never reaches.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -41,7 +40,6 @@ void main() {
 
   setUp(() {
     db = testDb();
-    // The screens reach the database through this in the running app.
     data.db = db;
     channels = FakeChannels()..install();
     video = FakeVideoPlayer()..install();
@@ -56,7 +54,7 @@ void main() {
     tmp.deleteSync(recursive: true);
   });
 
-  /// A file that is not an image, so decoding it has to fail.
+  /// Invalid image file to force decode failures.
   File brokenImage(String name) =>
       File('${tmp.path}/$name')..writeAsStringSync('kein bild');
 
@@ -73,8 +71,7 @@ void main() {
         ),
       );
 
-  // The decoder never runs in a widget test, so this only shows that a row
-  // with a broken file still builds. The fallback itself is checked on device.
+  // Image decoding is no-op in widget tests; verifies widget builds with corrupt file.
   group('a thumbnail that will not decode', () {
     testWidgets('leaves the placeholder in the list', (tester) async {
       final rows = await cacheEntries(db, [
@@ -131,7 +128,7 @@ void main() {
     await cacheEntries(db, [
       sampleEntry(id: 1, text: 'Haus', currentVideo: sampleVideo),
     ]);
-    // Never answers, so only the cached hits can show up.
+    // Unresponsive HTTP client forces cache-only search results.
     useClient(_SilentClient());
 
     await tester.pumpWidget(await harness(db, DictionaryScreen(db: db)));
@@ -188,8 +185,7 @@ void main() {
   });
 
   testWidgets('a backup that is not even text says so', (tester) async {
-    // Half a utf-8 sequence. The decoder replaces it and the JSON parser is
-    // the one who complains, with a friendly message.
+    // Truncated UTF-8 sequence to trigger JSON parser error.
     final file = File('${tmp.path}/kaputt.json')
       ..writeAsBytesSync([0x7b, 0xc3]);
     channels.pick = file.path;
@@ -302,7 +298,6 @@ void main() {
 
       expect(light.extension<AppColors>()!.accent, const Color(wanted));
       expect(dark.extension<AppColors>()!.accent, isNot(const Color(wanted)));
-      // Everything else stays as it was.
       expect(light.extension<AppColors>()!.bg, AppColors.light.bg);
     });
 
@@ -337,7 +332,6 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(ColorPicker), findsOneWidget);
 
-      // Drag the saturation area, which is what a free pick amounts to.
       final area = tester.getRect(find.byType(ColorPicker));
       await tester.tapAt(Offset(area.left + 20, area.top + 20));
       await tester.pumpAndSettle();
@@ -378,7 +372,6 @@ void main() {
     expect(tinted.accent, other);
     expect(tinted.bg, AppColors.light.bg);
 
-    // The other way round, so every fallback is taken once.
     final swapped = AppColors.light.copyWith(bg: other);
     expect(swapped.bg, other);
     expect(swapped.accent, AppColors.light.accent);
@@ -404,7 +397,7 @@ void main() {
   });
 }
 
-/// Takes the request and never answers, so only the cache can fill the screen.
+/// Never responds to requests to test client timeouts and cache fallbacks.
 class _SilentClient extends http.BaseClient {
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) =>

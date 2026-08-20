@@ -4,8 +4,7 @@ library;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gebaerden/api/queries.dart';
 
-/// Runs against signdict.org. There is no bundled dictionary, so a broken
-/// endpoint has to fail here, not on a phone.
+/// Live integration tests against signdict.org.
 void main() {
   test('searchWord finds a common word', () async {
     final hits = await searchWord('Haus');

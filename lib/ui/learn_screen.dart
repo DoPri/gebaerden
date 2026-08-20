@@ -64,7 +64,6 @@ class _LearnScreenState extends State<LearnScreen> {
   var _due = 0;
   var _fresh = 0;
 
-  /// Shuts the answer buttons out while a card is being written away.
   var _writing = false;
 
   StoredCard? get _card => _queue.isEmpty ? null : _queue.first;
@@ -81,13 +80,9 @@ class _LearnScreenState extends State<LearnScreen> {
       if (mounted) setState(() => _lists = lists);
     });
 
-    // On a fresh install, the dictionary only arrives once the app is up in
-    // the background. This tab has counted by then and without listening it
-    // would keep showing the zero.
+    // Update deck preview when initial dictionary finishes importing in background.
     _writes = entryWrites.listen((_) {
-      // The index comes in about fifty batches and rebuilding the deck for
-      // each of them would read the whole cache that many times. Let the burst
-      // settle first.
+      // Debounce deck rebuilds across dictionary import batches.
       _settle?.cancel();
       _settle = Timer(const Duration(milliseconds: 400), () {
         if (mounted && !_running) _preview();
@@ -105,15 +100,14 @@ class _LearnScreenState extends State<LearnScreen> {
   @override
   void didUpdateWidget(LearnScreen old) {
     super.didUpdateWidget(old);
-    // Switching the scope keeps this State and only swaps the widget, so
-    // nothing else would recount and the old numbers would stay on screen.
+    // Recount deck when list scope changes within existing State.
     if (old.listId != widget.listId) unawaited(_preview());
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // The deck depends on the settings, which initState may not read yet.
+    // Initial preview requires SettingsScope from context.
     if (_loaded) return;
     _loaded = true;
     _preview();
@@ -122,12 +116,9 @@ class _LearnScreenState extends State<LearnScreen> {
   Future<List<int>?> _scope() async =>
       widget.listId == null ? null : listEntryIds(widget.db, widget.listId!);
 
-  /// The list being learned, once its row has arrived. Null means all words.
   StoredList? get _list =>
       _lists.where((l) => l.id == widget.listId).firstOrNull;
 
-  /// A list carries its own budget, so a day spent on one leaves the next one
-  /// untouched. Without its own it falls back to the global setting.
   int _newPerDay(AppSettings settings) =>
       _list?.newPerDay ?? settings.newPerDay;
 
@@ -196,7 +187,7 @@ class _LearnScreenState extends State<LearnScreen> {
     );
     final videos = await preferredVideos(widget.db, rows);
 
-    // A short deck cannot supply its own distractors.
+    // Fallback pool when deck has too few entries for distractors.
     final pool = rows.length >= 12
         ? rows
         : await (widget.db.select(widget.db.entries)
@@ -217,12 +208,10 @@ class _LearnScreenState extends State<LearnScreen> {
 
   Future<void> _answer(f.Rating rating) async {
     final card = _card;
-    // One answer at a time. A second tap while the write is still running would
-    // grade the same card twice and drop the next one unseen.
+    // Prevent duplicate grading on rapid taps while async write is inflight.
     if (card == null || _writing) return;
     _writing = true;
 
-    // A forgotten word gets the heavier bump.
     unawaited(
       rating == f.Rating.again
           ? HapticFeedback.mediumImpact()
@@ -239,7 +228,6 @@ class _LearnScreenState extends State<LearnScreen> {
 
     setState(() {
       _seen++;
-      // Again puts the card back into this session.
       _queue = rating == f.Rating.again ? [...rest, graded] : rest;
       if (_queue.isEmpty) _running = false;
     });
@@ -467,10 +455,7 @@ class _LearnScreenState extends State<LearnScreen> {
       onAnswer: _answer,
     );
 
-    // Choice and typing need a written answer, which only recognition has.
-    // The seen counter is part of the key. So, a card answered wrong comes back
-    // as the same id and without a fresh state it would stay locked in its
-    // answered shape.
+    // Production direction lacks written options; _seen in key resets widget state on repeat.
     final body =
         card.direction == Direction.production ||
             settings.mode == ReviewMode.self
@@ -551,8 +536,6 @@ class _Link extends StatelessWidget {
   final String to;
   final bool small;
   final bool selected;
-
-  /// Scope chips swap the branch instead of stacking another lobby on it.
   final bool replace;
 
   @override
@@ -568,8 +551,7 @@ class _Link extends StatelessWidget {
             horizontal: small ? 12 : 16,
             vertical: small ? 7 : 13,
           ),
-          // A chip in the Wrap has to shrink to its word. With an alignment a
-          // Container fills the width it is offered instead.
+          // Non-null alignment forces Container to expand full width.
           alignment: small ? null : Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(small ? 999 : 4),

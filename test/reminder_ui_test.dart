@@ -13,8 +13,6 @@ import 'channels.dart';
 import 'harness.dart';
 import 'support.dart';
 
-/// The reminders of a list. They used to sit under Mehr and be global, so the
-/// panel now needs a list to belong to.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -25,7 +23,6 @@ void main() {
   setUp(() async {
     db = testDb();
     channels = FakeChannels()..install();
-    // main() does this before any screen is up.
     await initNotifications();
     list = await createList(db, 'Küche');
   });
@@ -85,7 +82,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect((await stored()).single.days, {1, 2, 3, 4, 5, 7});
-    // Six days means six alarms, one for each.
     expect(channels.scheduled, hasLength(6));
     await drain(tester);
   });
@@ -127,7 +123,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(await stored(), hasLength(2));
-    // Five weekday alarms plus one daily.
     expect(channels.scheduled, hasLength(6));
     await drain(tester);
   });
@@ -143,7 +138,7 @@ void main() {
 
     expect(await stored(), isEmpty);
     expect(channels.scheduled, isEmpty);
-    // Only the alarms go, a running download keeps its notification.
+    // Reminder cleanup must not cancel active download notifications.
     expect(
       channels.calls,
       contains(
@@ -191,7 +186,7 @@ void main() {
       sampleEntry(id: 3, text: 'Baum', currentVideo: sampleVideo),
     ]);
     await addToList(db, list.id, [1]);
-    // The body counts what is due and a fresh card is new rather than due.
+    // Notification body counts only due cards, excluding new cards.
     final card = await getOrCreateCard(db, 1, Direction.recognition);
     await db
         .into(db.cards)
@@ -212,7 +207,6 @@ void main() {
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
 
-    // One word in the list, not the three in the cache.
     expect(channels.scheduled.single['body'], contains('1'));
     await drain(tester);
   });
@@ -250,7 +244,7 @@ void main() {
 
     await tester.tap(find.text('Um 07:30 Uhr'));
     await tester.pumpAndSettle();
-    // The dial cannot be aimed at a minute in a test, the text entry can.
+    // Switches to keyboard input for reliable time selection in widget tests.
     await tester.tap(find.byIcon(Icons.keyboard_outlined));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, '9');
@@ -259,9 +253,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect((await stored()).single.time, '09:15');
-    // Daily is one repeating alarm and it carries the new time.
     expect(channels.scheduled.single['scheduledDateTime'], contains('09:15'));
-    // Rescheduled without asking for the permission again.
     expect(
       channels.calls,
       isNot(

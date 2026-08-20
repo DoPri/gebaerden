@@ -14,8 +14,7 @@ import 'channels.dart';
 import 'fake_storage.dart';
 import 'support.dart';
 
-/// Pretends the native side reported back, which is the only way into the
-/// update stream the manager listens on.
+/// Simulates native platform update stream events.
 Future<void> report(Task task, TaskStatus status) async {
   await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
       .handlePlatformMessage(
@@ -56,7 +55,7 @@ void main() {
   late MemoryStorage storage;
 
   setUpAll(() {
-    // Must happen before anything touches the singleton.
+    // Required before accessing FileDownloader singleton.
     storage = MemoryStorage();
     FileDownloader(persistentStorage: storage);
   });
@@ -64,7 +63,7 @@ void main() {
   setUp(() async {
     db = testDb();
     channels = FakeChannels()..install();
-    // The update stream takes one listener and every start() adds one.
+    // Reset single-listener update stream before each start().
     await FileDownloader().resetUpdates();
     manager = Downloads(db);
     downloads = manager;
@@ -77,7 +76,6 @@ void main() {
     await db.close();
   });
 
-  /// The file the downloader would have written.
   Future<File> lay(Task task, {int bytes = 40}) async {
     final file = File(await task.filePath());
     file.parent.createSync(recursive: true);
@@ -127,8 +125,7 @@ void main() {
       await manager.start();
       await Future<void>.delayed(const Duration(milliseconds: 300));
 
-      // The label and the counts of the row, not the downloader's own tally
-      // of the tasks it has been handed so far.
+      // Notification reflects database package state, not downloader task tally.
       final last = channels.shown.last;
       expect(last['title'], 'Hallo');
       expect(last['body'], '0 von 2');
@@ -147,7 +144,7 @@ void main() {
     });
 
     test('the queue is told to run in the foreground', () async {
-      // Without it Android ends a task after nine minutes.
+      // Android terminates background tasks after 9 minutes without foreground service.
       await manager.start();
       expect(
         channels.calls,
@@ -157,8 +154,7 @@ void main() {
 
     test('a task of a package that is not running stays gone', () async {
       await queue('entry:1', 'Hallo', PackageStatus.paused);
-      // Stopping deletes the records, but the app does not always live long
-      // enough to finish that. What is left must not restart the download.
+      // Leftover records from ungraceful shutdown must not resume paused packages.
       await FileDownloader().database.updateRecord(
         TaskRecord(videoTask(videoId: 7777), TaskStatus.enqueued, 0, 0),
       );
@@ -170,8 +166,7 @@ void main() {
 
     test('a task killed with the app is enqueued again', () async {
       await queue('entry:1', 'Hallo', PackageStatus.running);
-      // All a kill leaves behind. The native queue is empty and no file was
-      // written, so tracking cannot mark the record complete either.
+      // Simulates process termination leaving uncompleted enqueued records.
       await FileDownloader().database.updateRecord(
         TaskRecord(videoTask(videoId: 7777), TaskStatus.enqueued, 0, 0),
       );
@@ -236,7 +231,7 @@ void main() {
       final video = videoTask();
       await lay(video, bytes: 64);
       await report(video, TaskStatus.complete);
-      // Thumbnails are gone upstream often enough. The package still counts.
+      // Missing thumbnails upstream should not fail the entire package.
       await report(videoTask(kind: AssetKind.thumbnail), TaskStatus.failed);
       await Future<void>.delayed(const Duration(milliseconds: 600));
 
@@ -250,8 +245,6 @@ void main() {
       await queue('entry:1', 'Hallo', PackageStatus.running);
       await manager.start();
 
-      // One of two files reported. Early in a big package every record the
-      // native side knows can be complete at once, which used to read as done.
       final video = videoTask();
       await lay(video);
       await report(video, TaskStatus.complete);
@@ -301,7 +294,7 @@ void main() {
     });
 
     test('a task the system paused goes back into the queue', () async {
-      // Nobody here asks for a pause. The system does and then it waits.
+      // Simulates OS-initiated task pause.
       await queue('entry:1', 'Hallo', PackageStatus.running);
       await manager.start();
 
@@ -318,14 +311,11 @@ void main() {
       await queue('entry:1', 'Hallo', PackageStatus.running);
       await manager.start();
 
-      // Both files of the plan came back cancelled and nothing arrived, so a
-      // resume still has everything to fetch.
       await report(videoTask(), TaskStatus.canceled);
       await report(videoTask(kind: AssetKind.thumbnail), TaskStatus.canceled);
       await Future<void>.delayed(const Duration(milliseconds: 600));
 
-      // start() put the row left on running back in the queue and the cancels
-      // must not carry it from there to done.
+      // Cancel events from startup recovery must not transition queued package to done.
       expect((await package('entry:1')).status, PackageStatus.queued);
       expect((await package('entry:1')).done, 0);
     });
@@ -335,7 +325,7 @@ void main() {
       await manager.start();
 
       await manager.pausePackage('entry:1');
-      // The plugin reports every canceled task and the records stay.
+      // Plugin emits cancel events when pausing.
       await report(videoTask(), TaskStatus.canceled);
       await report(videoTask(kind: AssetKind.thumbnail), TaskStatus.canceled);
       await Future<void>.delayed(const Duration(milliseconds: 600));
@@ -426,7 +416,6 @@ void main() {
       await manager.pausePackage('entry:1');
 
       expect((await package('entry:1')).status, PackageStatus.paused);
-      // Nothing left that a later start could pick up again.
       expect(
         await FileDownloader().database.allRecords(group: 'entry:1'),
         isEmpty,
@@ -444,7 +433,7 @@ void main() {
       final before = await package('entry:1');
 
       await manager.pausePackage('entry:1');
-      // Late reports must not move the numbers on a package the user stopped.
+      // In-flight reports after pause must not mutate counts.
       await report(videoTask(kind: AssetKind.thumbnail), TaskStatus.complete);
       await Future<void>.delayed(const Duration(milliseconds: 600));
 
@@ -459,7 +448,7 @@ void main() {
       await manager.pausePackage('entry:1');
       channels.enqueued.clear();
 
-      // What the button in the notification calls, it only knows the group.
+      // Notification action only provides the group ID.
       await manager.resumeById('entry:1');
       expect(channels.enqueued, contains('951-video'));
     });
@@ -496,11 +485,7 @@ void main() {
     });
 
     group('a button in the shade', () {
-      /// The whole way in. The plugin hands the press to whoever registered,
-      /// and start() is what registers. This used to be an argument main
-      /// passed to initNotifications. When it went missing the buttons still
-      /// drew and still woke the app and no test noticed because none of
-      /// them ever pressed one.
+      /// Simulates action callback registered by [Downloads.start].
       Future<void> press(String action, String id) async {
         packageActionHandler!(action, id);
         await Future<void>.delayed(const Duration(milliseconds: 300));
@@ -569,8 +554,7 @@ void main() {
       await manager.startPackage(const EntryPackage(1, 'Hallo'));
       expect((await package('entry:1')).total, 2);
 
-      // The native side writes one record per task as it takes them on. The
-      // denominator used to follow that and climbed while the bar ran.
+      // Total count must reflect planned items, not incrementally registered native records.
       await report(videoTask(), TaskStatus.enqueued);
       await Future<void>.delayed(const Duration(milliseconds: 600));
 
@@ -596,7 +580,6 @@ void main() {
       await report(thumb, TaskStatus.complete);
       await Future<void>.delayed(const Duration(milliseconds: 600));
 
-      // The record of the run before must not count into this one.
       final row = await package('entry:1');
       expect(row.total, 1);
       expect(row.done, 1);

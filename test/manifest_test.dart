@@ -2,8 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// The plugins need entries in the app manifest that nothing else checks. A
-/// missing receiver costs nothing at build time and swallows every reminder.
+/// Verifies required Android manifest entries for plugins not validated at build time.
 void main() {
   final manifest = File(
     'android/app/src/main/AndroidManifest.xml',
@@ -33,8 +32,7 @@ void main() {
   });
 
   test('the downloader may hold a foreground service', () {
-    // Without these the queue stops nine minutes after the app goes away and
-    // from API 34 the service does not even start.
+    // Required on Android API 34+ to run foreground data sync services beyond 9 minutes.
     expect(manifest, contains('android.permission.FOREGROUND_SERVICE'));
     expect(
       manifest,

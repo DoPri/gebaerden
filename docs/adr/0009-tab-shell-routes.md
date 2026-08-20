@@ -4,18 +4,12 @@ Status: accepted
 
 ## Context
 
-`/`, `/lernen`, `/listen` and `/mehr` live inside the tab shell. Pushing one of
-them lays the shell on top of itself and aborts with a duplicate navigator key.
-
-Every screen rendered correctly while "Diese Liste lernen" crashed the app,
-because the button pushed instead of going.
+Pushing tab routes (`/`, `/lernen`, `/listen`, `/mehr`) duplicates the shell and crashes with duplicate navigator keys.
 
 ## Decision
 
-Navigation into a tab shell route uses `context.go`. Routes outside the shell,
-such as an entry or a letter, are pushed as usual.
+Navigation into shell routes uses `context.go`. External routes (entries, letters) use `push`.
 
 ## Consequences
 
-The way between screens is tested, not only the screens. A route transition
-that only exists in a button callback is where this class of bug hides.
+UI tests must drive navigation flows, not just individual screens, to catch routing bugs.

@@ -10,7 +10,7 @@ class Topic {
   final List<String> words;
 }
 
-/// Every word checked against the live API. Missing ones were dropped.
+// Topic words verified against live API.
 const topics = [
   Topic('Begrüßung', [
     'Hallo',
@@ -118,7 +118,6 @@ const topics = [
   ]),
 ];
 
-/// Resolves the words, caches them and drops them into a fresh list.
 Future<StoredList?> importTopic(AppDatabase db, Topic topic) async {
   final ids = (await resolveExact(topic.words)).values.toList();
   if (ids.isEmpty) return null;

@@ -158,8 +158,7 @@ void main() {
             ),
           );
 
-      // The file is not a real video, so opening it fails. The screen has to
-      // survive that instead of going down with it.
+      // Corrupt or dummy video file should not crash player widget.
       await tester.pumpWidget(
         await harness(db, SignVideo(db: db, video: sampleVideo, label: 'Haus')),
       );
@@ -231,7 +230,7 @@ void main() {
       );
       await settle(tester);
 
-      // The four answers are drawn at random, so take whichever is there.
+      // Answers are randomized.
       final offered = [
         'H',
         'A',
@@ -400,7 +399,7 @@ void main() {
       await tester.pumpWidget(await harness(db, EntryScreen(db: db, id: 835)));
       await settle(tester);
 
-      // The video fills the top, so the rest needs scrolling into view.
+      // Video header pushes related words off-screen.
       await tester.scrollUntilVisible(
         find.text('VERWANDTE WÖRTER'),
         300,
@@ -408,7 +407,6 @@ void main() {
       );
       expect(find.text('Ein Gebäude zum Wohnen.'), findsOneWidget);
       expect(find.text('Hausfrau'), findsOneWidget);
-      // The entry itself is not related to itself.
       expect(find.widgetWithText(WordChip, 'Haus'), findsNothing);
       await drain(tester);
     });

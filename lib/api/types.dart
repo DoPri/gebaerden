@@ -49,7 +49,7 @@ class ApiVideo {
       : (copyright?.isNotEmpty == true ? copyright! : 'Unbekannt');
 }
 
-/// Free-form upstream. Observed: word, phrase, example.
+/// Free-form values returned by upstream (e.g. word, phrase, example).
 class ApiEntry {
   const ApiEntry({
     required this.id,
@@ -61,8 +61,7 @@ class ApiEntry {
     this.videos,
   });
 
-  /// Plain parse. Normalising belongs to toCached, so hand-built entries go
-  /// through the same rules.
+  // Raw deserialization; normalization is deferred to toCached.
   factory ApiEntry.fromJson(Map<String, dynamic> json) {
     final current = json['currentVideo'] as Map<String, dynamic>?;
     return ApiEntry(

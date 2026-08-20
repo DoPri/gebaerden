@@ -5,7 +5,7 @@ class License {
   final String url;
 }
 
-/// Upstream CC paths map onto the CC URL space.
+/// Maps upstream CC path fragments onto Creative Commons license URLs.
 License? parseLicense(String? code) {
   final clean = code?.trim().replaceAll(RegExp(r'^/+|/+$'), '') ?? '';
   if (clean.isEmpty) return null;

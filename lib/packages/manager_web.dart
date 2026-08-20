@@ -1,11 +1,10 @@
-// Offline downloads are a native-only feature.
+// Offline downloads are native-only.
 
 import '../db/database.dart';
 import 'spec.dart';
 
 export 'spec.dart';
 
-/// Nothing here downloads anything, so nothing offers it either.
 const downloadsAvailable = false;
 
 class Downloads {

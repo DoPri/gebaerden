@@ -6,9 +6,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 final _plugin = FlutterLocalNotificationsPlugin();
 
-/// The same check the plugin runs, anywhere else it has no implementation.
-/// A browser on a phone reports android or iOS as well, and the plugins behind
-/// this would answer with a missing implementation before the app is even up.
+// Plugin throws MissingPluginException on mobile web browsers.
 bool get _supported =>
     !kIsWeb &&
     (defaultTargetPlatform == TargetPlatform.android ||
@@ -26,7 +24,7 @@ const weekdayLongNames = [
   'Sonntag',
 ];
 
-/// Days are ISO, 1 is Monday.
+// ISO weekdays: 1 is Monday, 7 is Sunday.
 @immutable
 class Reminder {
   const Reminder({
@@ -62,7 +60,6 @@ class Reminder {
   int get hashCode => Object.hash(hour, minute, Object.hashAllUnordered(days));
 }
 
-/// hh:mm, the shape the time picker produces.
 ({int hour, int minute})? parseTime(String value) {
   final match = RegExp(r'^(\d{1,2}):(\d{2})$').firstMatch(value.trim());
   if (match == null) return null;
@@ -73,7 +70,6 @@ class Reminder {
   return (hour: hour, minute: minute);
 }
 
-/// One entry per line, days and time separated by a space: `12345 08:00`.
 String encodeReminders(List<Reminder> reminders) => [
   for (final r in reminders) '${(r.days.toList()..sort()).join()} ${r.time}',
 ].join('\n');
@@ -96,7 +92,6 @@ List<Reminder> parseReminders(String value) {
   return out;
 }
 
-/// Says when it fires, in the words the settings screen uses.
 String describeReminder(Reminder reminder) {
   final days = reminder.days.toList()..sort();
   final when = switch (days) {
@@ -109,12 +104,9 @@ String describeReminder(Reminder reminder) {
   return '$when um ${reminder.time} Uhr';
 }
 
-/// The count is baked in when scheduling, so it goes stale within a day.
 String reminderBody(int due) =>
     due > 0 ? '$due Karten warten auf dich.' : 'Zeit für ein paar Gebärden.';
 
-/// The first occurrence at or after now. Repetition is left to
-/// matchDateTimeComponents.
 tz.TZDateTime nextOccurrence(
   ({int hour, int minute}) at, {
   int? weekday,
@@ -122,9 +114,7 @@ tz.TZDateTime nextOccurrence(
 }) {
   final from = now ?? tz.TZDateTime.now(tz.local);
 
-  // Rebuilt from the calendar parts on every step. Adding a Duration moves the
-  // instant by exactly 24 hours, which shifts the wall clock by an hour across
-  // a daylight saving change.
+  // Constructing from calendar components avoids DST 24-hour drift.
   tz.TZDateTime on(int days) => tz.TZDateTime(
     from.location,
     from.year,
@@ -135,8 +125,7 @@ tz.TZDateTime nextOccurrence(
   );
 
   var day = on(0).isAfter(from) ? 0 : 1;
-  // Seven steps cover every weekday. The bound keeps a day outside 1..7 from
-  // spinning forever.
+  // Bound search to 7 days to prevent infinite loop on invalid weekday.
   final last = day + 7;
   while (weekday != null && day < last && on(day).weekday != weekday) {
     day++;
@@ -144,19 +133,13 @@ tz.TZDateTime nextOccurrence(
   return on(day);
 }
 
-/// Reminders take the low ids, a download sits above. Both sides only ever
-/// cancel their own, cancelAll would take the other one with it.
+// Partition notification IDs to allow independent cancellation.
 const _firstPackageId = 1000;
 
 int _packageId(String group) => _firstPackageId + group.hashCode.abs() % 100000;
 
-/// What a tap on a button in the download notification asks for.
 typedef PackageAction = void Function(String action, String group);
 
-/// Whoever owns the queue puts itself here. The response handler asks for it
-/// when a button is pressed rather than taking it at startup: this used to be
-/// an argument of [initNotifications], main stopped passing it, and nothing
-/// said so. The buttons still drew, still woke the app, and dropped the press.
 PackageAction? packageActionHandler;
 
 Future<void> initNotifications() async {
@@ -178,9 +161,6 @@ Future<void> initNotifications() async {
   );
 }
 
-/// A tap that started the app cold never reaches the callback above, it waits
-/// here instead. Called once the app is up: during main() the plugin channel
-/// does not answer, and reminderTapHandler is not set yet either.
 Future<void> handleNotificationLaunch() async {
   if (!_supported) return;
   final launch = await _plugin.getNotificationAppLaunchDetails();
@@ -190,8 +170,6 @@ Future<void> handleNotificationLaunch() async {
   }
 }
 
-/// Whoever owns the navigator puts itself here, the same way the queue does
-/// for the buttons in the shade.
 typedef ReminderTap = void Function(String listId);
 ReminderTap? reminderTapHandler;
 
@@ -207,11 +185,7 @@ void _onResponse(NotificationResponse response) {
   if (action != null) packageActionHandler?.call(action, payload);
 }
 
-/// Mirrors a package row into the shade: same label, same counts, same state
-/// as the row on the offline screen. The downloader brings its own group
-/// notification, but that one counts the tasks it has been handed so far, not
-/// the ones the package plans, so its numbers jumped and it started over with
-/// every block. This one reads the row.
+// Mirrors DB state to avoid erratic native download progress jumps.
 Future<void> showPackage({
   required String group,
   required String label,
@@ -238,20 +212,16 @@ Future<void> showPackage({
         channelDescription: 'Fortschritt beim Herunterladen',
         importance: Importance.low,
         priority: Priority.low,
-        // Silent on every update, otherwise it pings on every file.
+        // Avoid audio ping on every progress update.
         onlyAlertOnce: true,
-        // Not swipeable while it runs, the download would keep going.
+        // Ongoing prevents dismissing while download is active.
         ongoing: !paused,
         autoCancel: false,
         showProgress: total > 0,
         maxProgress: total,
         progress: done.clamp(0, total < 0 ? 0 : total),
         indeterminate: total == 0,
-        // showsUserInterface brings the app up, and only then does the answer
-        // reach it: a button pressed while the app sits in the background goes
-        // to an isolate of its own that knows neither the database nor the
-        // queue. cancelNotification off, the shade follows the row and the row
-        // alone decides when the notification goes.
+        // showsUserInterface routes action to main isolate with DB access.
         actions: [
           AndroidNotificationAction(
             paused ? 'resume' : 'pause',
@@ -278,8 +248,7 @@ Future<void> hidePackage(String group) async {
   await _plugin.cancel(id: _packageId(group));
 }
 
-/// Everything the last run left in the shade. A row that is gone cannot say
-/// so itself, and an ongoing notification outlives the process.
+// Clear stale notifications from killed processes.
 Future<void> hideAllPackages() async {
   final android = _plugin
       .resolvePlatformSpecificImplementation<
@@ -314,8 +283,7 @@ Future<bool> _permitted({required bool ask}) async {
   return true;
 }
 
-/// Only the reminders. cancelAll would take a running download's notification
-/// with it, and that one has nothing to do with the alarms.
+// Cancel reminders without affecting active download notifications.
 Future<void> cancelReminders() async {
   if (!_supported) return;
   for (final pending in await pendingReminders()) {
@@ -323,7 +291,6 @@ Future<void> cancelReminders() async {
   }
 }
 
-/// What is actually queued with the system. Used by the device tests.
 Future<List<PendingNotificationRequest>> pendingReminders() async => _supported
     ? (await _plugin.pendingNotificationRequests())
           .where((p) => p.id < _firstPackageId)
@@ -339,7 +306,6 @@ const _details = NotificationDetails(
   iOS: DarwinNotificationDetails(),
 );
 
-/// The list a reminder belongs to, so a tap lands in its trainer.
 const reminderPayload = 'lernen:';
 
 Future<void> _put(
@@ -355,15 +321,13 @@ Future<void> _put(
   payload: '$reminderPayload$listId',
   scheduledDate: nextOccurrence(at, weekday: weekday),
   notificationDetails: _details,
-  // Exact alarms need a separate permission and this is not time critical.
+  // Avoid exact alarm permission for non-critical reminder timing.
   androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
   matchDateTimeComponents: weekday == null
       ? DateTimeComponents.time
       : DateTimeComponents.dayOfWeekAndTime,
 );
 
-/// One entry per reminder: the reminder, the list it belongs to and how many
-/// of that list's cards are waiting.
 typedef DueReminder = ({Reminder reminder, String listId, int due});
 
 Future<void> _schedule(List<DueReminder> reminders) async {
@@ -382,7 +346,6 @@ Future<void> _schedule(List<DueReminder> reminders) async {
   }
 }
 
-/// Asks for permission. False means the user said no.
 Future<bool> scheduleReminders(List<DueReminder> reminders) async {
   if (!_supported) return false;
   if (!await _permitted(ask: true)) return false;
@@ -390,7 +353,6 @@ Future<bool> scheduleReminders(List<DueReminder> reminders) async {
   return true;
 }
 
-/// Rewrites the count without prompting again.
 Future<void> refreshReminders(List<DueReminder> reminders) async {
   if (!_supported || reminders.isEmpty) return;
   if (!await _permitted(ask: false)) return;

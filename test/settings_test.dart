@@ -44,8 +44,7 @@ void main() {
   });
 
   test('a whole number for a decimal setting is taken as one', () async {
-    // The browser has one number type, so a stored 1.0 arrives as an int and
-    // an import can carry either. Both mean the same speed.
+    // JS and imported JSON represent whole floats as ints.
     await db
         .into(db.settings)
         .insertOnConflictUpdate(const StoredSetting(key: 'speed', value: 2));
@@ -88,7 +87,6 @@ void main() {
   });
 
   test('ignores a value of the wrong type', () async {
-    // Only a foreign file can carry this.
     await db
         .into(db.settings)
         .insertOnConflictUpdate(
@@ -110,7 +108,7 @@ void main() {
   });
 
   test('falls back when a stored name matches no enum', () async {
-    // A hand-edited backup passes the type check, the value is still a string.
+    // Handles corrupted enum strings in imported backups.
     await db.batch(
       (b) => b.insertAllOnConflictUpdate(db.settings, const [
         StoredSetting(key: 'mode', value: 'unsinn'),

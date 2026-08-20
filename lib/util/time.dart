@@ -1,4 +1,4 @@
-/// Upstream sends "2017-05-07 10:52:00".
+/// Parses upstream date format ("YYYY-MM-DD HH:MM:SS").
 DateTime? parseApiDate(String? value) {
   if (value == null || value.isEmpty) return null;
   return DateTime.tryParse(value.replaceFirst(' ', 'T'));
@@ -13,7 +13,7 @@ const _units = [
   ('Minute', 'Minuten', Duration(minutes: 1)),
 ];
 
-/// Both plural forms spelled out, Dart has no German plural rules.
+/// Provides explicit singular and plural forms for German declension.
 String? relativeTime(String? value, [DateTime? now]) {
   final date = parseApiDate(value);
   if (date == null) return null;
@@ -23,8 +23,7 @@ String? relativeTime(String? value, [DateTime? now]) {
   final abs = diff.abs();
 
   for (final (one, many, unit) in _units) {
-    // Truncated, not rounded. Rounding promotes half a unit to a whole one and
-    // turns six months into a year.
+    // Truncates rather than rounds to prevent premature unit promotion.
     final amount = abs.inSeconds ~/ unit.inSeconds;
     if (amount == 0) continue;
     final noun = amount == 1 ? one : many;
@@ -33,7 +32,6 @@ String? relativeTime(String? value, [DateTime? now]) {
   return 'gerade eben';
 }
 
-/// Labels under the answer buttons.
 String humanInterval(DateTime due, DateTime now) {
   final minutes = due.difference(now).inMinutes;
   if (minutes < 60) return '${minutes < 1 ? 1 : minutes} min';
@@ -45,7 +43,7 @@ String humanInterval(DateTime due, DateTime now) {
   if (days < 30) return '$days d';
 
   final months = days / 30.4;
-  // Anything that rounds to twelve months already reads as a year.
+  // Threshold avoids displaying 12 months instead of 1 year.
   if (months < 11.5) {
     return '${months.toStringAsFixed(months < 3 ? 1 : 0)} mo';
   }

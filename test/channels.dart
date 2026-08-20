@@ -5,20 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Answers the plugin channels so screens that talk to the platform can be
-/// tested. Every handler records what it was asked for.
+/// Mocks platform plugin method channels for tests.
 class FakeChannels {
   final calls = <String>[];
   final _channels = <String>[];
 
-  /// What the notification plugin was told to schedule.
   final scheduled = <Map<Object?, Object?>>[];
-
-  /// Task ids handed to the downloader.
   final enqueued = <String>[];
-
-  /// Stands in for the native queue: task id to the task as json. Enqueueing
-  /// fills it, cancelling empties it and allTasks reads it back.
   final queue = <String, String>{};
 
   void _queue(Map<Object?, Object?> task) {
@@ -27,45 +20,23 @@ class FakeChannels {
     queue[id] = jsonEncode(task);
   }
 
-  /// What the file picker hands back.
   String? pick;
-
-  /// Whether the device lets the app post notifications.
   bool notificationsAllowed = true;
-
-  /// Whether handing a file to the share sheet blows up.
   bool shareFails = false;
-
-  /// The json the sharing plugin reports on launch, null for nothing.
   String? shared;
-
-  /// What the notification plugin reports as still queued.
   List<Map<String, Object?>> pending = [];
-
-  /// The payload of the notification the app was started from, null when it
-  /// was started the usual way.
   String? launchPayload;
-
-  /// Notification ids the app took down, in order.
   final cancelled = <int>[];
-
-  /// What the app put into the shade, newest last.
   final shown = <Map<Object?, Object?>>[];
-
-  /// What the system reports as still standing in the shade.
   List<Map<String, Object?>> active = [];
-
-  /// Which directory the temp files land in.
   late final Directory tempDir;
 
   MockStreamHandlerEventSink? _connectivity;
 
-  /// Reports a change the way the platform does.
   void reportConnectivity(List<String> kinds) => _connectivity?.success(kinds);
 
   void install() {
-    // No plugin registrant runs in a test, so point the interface at the
-    // Android side by hand. defaultTargetPlatform is android here.
+    // Explicitly binds Android plugin implementation in test environment.
     FlutterLocalNotificationsPlatform.instance =
         AndroidFlutterLocalNotificationsPlugin();
 
@@ -145,24 +116,20 @@ class FakeChannels {
         }
         return switch (call.method) {
           'reset' => 0,
-          // The native queue, which is what the app asks after it was away.
           'allTaskIds' => queue.keys.toList(),
           'allTasks' => queue.values.toList(),
-          // What the native side held back while the app was away, keyed by
-          // task id. Nothing here, but it has to be a json map.
+          // Background downloader expects JSON map response.
           'popResumeData' || 'popStatusUpdates' || 'popProgressUpdates' => '{}',
           'configureNotification' || 'trackTasks' || 'requireWiFi' => null,
-          // 2 is granted, 1 denied. The downloader shows nothing when denied.
+          // 2: granted, 1: denied (downloader requires granted status).
           'permissionStatus' => notificationsAllowed ? 2 : 1,
-          // False stands for a request the platform did not carry out. The
-          // real one answers through a callback this fake has no part in.
+          // Simulates unfulfilled synchronous permission request.
           'requestPermission' => false,
           _ => null,
         };
       });
     }
 
-    // What the system handed the app on launch, as the plugin encodes it.
     _handle(
       'receive_sharing_intent/messages',
       (call) => call.method == 'getInitialMedia' ? shared : null,
@@ -178,13 +145,12 @@ class FakeChannels {
       return 'success';
     });
 
-    // Null stands for the user backing out of the picker.
     _handle(
       'plugins.flutter.io/file_selector',
       (call) => pick == null ? null : [pick],
     );
 
-    // Must exist, code writes files there before sharing them.
+    // Pre-creates directory for file sharing operations.
     tempDir = Directory.systemTemp.createTempSync('gebaerden_test');
     _handle('plugins.flutter.io/path_provider', (call) => tempDir.path);
     _handle('plugins.flutter.io/url_launcher', (call) => true);

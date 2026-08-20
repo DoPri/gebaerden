@@ -13,8 +13,7 @@ import 'fake_storage.dart';
 import 'harness.dart';
 import 'support.dart';
 
-/// The buttons on a running package. They hand work to the downloader, which
-/// encodes on its own isolate, so every tap needs the real clock.
+/// Tests download package UI controls requiring async isolate communication.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -58,7 +57,7 @@ void main() {
 
   Future<void> open(WidgetTester tester) async {
     await tester.pumpWidget(await harness(db, OfflineScreen(db: db)));
-    // A running package animates forever, so never pumpAndSettle here.
+    // Avoids infinite progress animation hangs.
     await settle(tester);
   }
 

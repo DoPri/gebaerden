@@ -23,20 +23,18 @@ class Stats {
   final List<DayCount> forecast;
   final int cards;
 
-  /// Past the learning phase.
+  /// Cards past the initial learning phase.
   final int retained;
 }
 
 DateTime _day(DateTime at) => DateTime(at.year, at.month, at.day);
 
-/// Rebuilt from the calendar parts. Subtracting a Duration of one day moves
-/// the instant by exactly 24 hours, which lands off midnight across a daylight
-/// saving change and no longer matches the day keys.
+/// Shifts calendar days directly to prevent DST hour offsets from skewing midnight keys.
 DateTime _shift(DateTime day, int days) =>
     DateTime(day.year, day.month, day.day + days);
 
 int streakFrom(Set<DateTime> days, DateTime today) {
-  // A blank today must not break yesterday's streak.
+  // Preserves streak if today has no reviews yet.
   var cursor = days.contains(_day(today))
       ? _day(today)
       : _shift(_day(today), -1);
@@ -87,7 +85,7 @@ Future<Stats> collectStats(
     for (var i = 0; i < 7; i++)
       () {
         final day = _shift(today, i);
-        // Overdue cards count for today.
+        // Overdue cards are folded into today's forecast.
         return DayCount(day, (due[day] ?? 0) + (i == 0 ? overdue : 0));
       }(),
   ];

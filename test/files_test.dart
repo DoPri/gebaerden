@@ -13,7 +13,7 @@ void main() {
   tearDown(() => tmp.deleteSync(recursive: true));
 
   test('a file the picker read into memory keeps its umlauts', () async {
-    // This is what Android hands over and readAsString would mangle it.
+    // Android returns in-memory XFile where readAsString() mangles encoding.
     final file = XFile.fromData(
       Uint8List.fromList(utf8.encode('Begrüßung')),
       name: 'liste.dgsliste',
@@ -28,8 +28,7 @@ void main() {
   });
 
   test('a file that is not UTF-8 still turns into text', () async {
-    // The picker does not enforce the extension, so anything can arrive.
-    // The parsers downstream fail with a friendly message on this.
+    // File picker may provide arbitrary non-UTF8 bytes.
     final file = XFile.fromData(
       Uint8List.fromList([0xFF, 0xFE, 0x61]),
       name: 'liste.dgsliste',

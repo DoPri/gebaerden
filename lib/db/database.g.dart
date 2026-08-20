@@ -238,7 +238,7 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, CachedEntry> {
 class CachedEntry extends DataClass implements Insertable<CachedEntry> {
   final int id;
 
-  /// Not `text`, that name is taken by drift's own column builder.
+  /// Named `word` because `text` conflicts with drift's column builder.
   final String word;
   final String? type;
   final String? description;
@@ -2285,8 +2285,7 @@ class StoredList extends DataClass implements Insertable<StoredList> {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  /// Null falls back to the setting. A list carries its own budget so a day
-  /// spent on one does not eat the next one's.
+  /// Independent daily budget per list; null falls back to global setting.
   final int? newPerDay;
   final int? reviewPerDay;
   const StoredList({
@@ -4068,7 +4067,6 @@ class RecentItem extends DataClass implements Insertable<RecentItem> {
   final int id;
   final RecentKind kind;
 
-  /// Query text, or the entry id as a string.
   final String value;
   final String label;
   final DateTime at;

@@ -35,7 +35,6 @@ Future<void> ensureSystemLists(AppDatabase db) async {
   );
 }
 
-/// System lists in fixed order, then the rest alphabetically.
 Future<List<StoredList>> allLists(AppDatabase db) async {
   await ensureSystemLists(db);
   final lists = await db.select(db.lists).get();
@@ -80,8 +79,7 @@ Future<void> renameList(AppDatabase db, String id, String name) async {
   );
 }
 
-/// Null leaves the value alone. [clearListLimits] is the way back to the
-/// setting, since null here cannot mean both.
+/// Null preserves existing limits; use [clearListLimits] to reset to global default.
 Future<void> setListLimits(
   AppDatabase db,
   String id, {
@@ -99,7 +97,6 @@ Future<void> setListLimits(
   );
 }
 
-/// Hands the list back to the global setting.
 Future<void> clearListLimits(AppDatabase db, String id) async {
   await (db.update(db.lists)..where((t) => t.id.equals(id))).write(
     ListsCompanion(
@@ -117,7 +114,7 @@ Future<void> deleteList(AppDatabase db, String id) async {
   if (list == null || isSystem(list)) return;
   await db.transaction(() async {
     await (db.delete(db.listItems)..where((t) => t.listId.equals(id))).go();
-    // The reminders belong to the list, nothing else would clear them.
+    // Cascade-delete list reminders.
     await (db.delete(db.reminders)..where((t) => t.listId.equals(id))).go();
     await (db.delete(db.lists)..where((t) => t.id.equals(id))).go();
   });
@@ -161,7 +158,7 @@ Future<void> addToList(
           ListItemsCompanion.insert(
             listId: listId,
             entryId: entryId,
-            // Stagger so a bulk add keeps its order.
+            // Stagger timestamps to preserve insertion order.
             addedAt: existing[entryId] ?? base.add(Duration(milliseconds: i)),
           ),
       ]),

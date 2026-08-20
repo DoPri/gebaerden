@@ -8,8 +8,7 @@ import '../db/repo.dart';
 const listSchema = 'signdict-liste/v1';
 const listExtension = 'dgsliste';
 
-/// Declared in `ios/Runner/Info.plist`. The iOS picker selects by type, and
-/// file_selector throws on a group that carries none.
+// iOS file picker requires declared UTI in Info.plist.
 const listUti = 'gg.prinz.gebaerden.liste';
 
 class SharedList {
@@ -17,7 +16,7 @@ class SharedList {
 
   final String name;
 
-  /// Id and word, so the receiver sees the contents without a network round trip.
+  // Inlined word avoids immediate network lookup on import.
   final List<({int id, String word})> entries;
 }
 
@@ -76,12 +75,11 @@ SharedList parseListFile(String text) {
 }
 
 String listFileName(String name) {
-  // Only strip what a file name cannot hold. Dart's \w would eat the umlauts.
+  // Strip invalid filename characters without removing umlauts.
   final safe = name.replaceAll(RegExp(r'[\\/:*?"<>|]'), '').trim();
   return '${safe.isEmpty ? 'Liste' : safe}.$listExtension';
 }
 
-/// Creates the list, then pulls the entries the device does not know yet.
 Future<StoredList> importSharedList(AppDatabase db, SharedList shared) async {
   final list = await createList(db, shared.name);
   await addToList(db, list.id, shared.entries.map((e) => e.id).toList());
@@ -100,7 +98,7 @@ Future<StoredList> importSharedList(AppDatabase db, SharedList shared) async {
     try {
       await cacheEntries(db, await fetchEntries(chunk));
     } on Exception {
-      // Offline is fine, the words show up once the dictionary is reachable.
+      // Missing metadata can be lazily fetched when online.
       break;
     }
   }

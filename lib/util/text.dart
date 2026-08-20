@@ -1,6 +1,5 @@
 final _keep = RegExp('[^a-z0-9]');
 
-/// Ignores case, umlaut spelling and punctuation.
 String normalizeAnswer(String value) => value
     .toLowerCase()
     .replaceAll('ß', 'ss')
@@ -14,7 +13,7 @@ bool answersMatch(String typed, String expected) {
   return a.isNotEmpty && a == normalizeAnswer(expected);
 }
 
-/// DIN 5007-1. Codepoint order would put Baum before Bär.
+/// DIN 5007-1 German collation (umlauts sorted as base vowels).
 String collateDe(String value) => value
     .toLowerCase()
     .replaceAll('ä', 'a')
@@ -26,6 +25,6 @@ String count(int n, String one, String many) => '$n ${n == 1 ? one : many}';
 
 int compareDe(String a, String b) {
   final folded = collateDe(a).compareTo(collateDe(b));
-  // Bar and Bär fold alike.
+  // Fallback to distinct codepoints when folded representations collide.
   return folded != 0 ? folded : a.compareTo(b);
 }

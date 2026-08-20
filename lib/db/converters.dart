@@ -34,7 +34,7 @@ class VideoListConverter extends TypeConverter<List<ApiVideo>?, String?>
       value == null ? null : jsonEncode(value.map((v) => v.toJson()).toList());
 }
 
-/// Untyped, the column holds whatever a screen needs.
+/// Stores arbitrary screen state payloads as untyped JSON.
 class JsonConverter extends TypeConverter<Object?, String> {
   const JsonConverter();
 

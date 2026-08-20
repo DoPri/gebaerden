@@ -25,8 +25,7 @@ void main() {
   late GoRouter router;
 
   setUpAll(() {
-    // Without this the downloader keeps its store on its own isolate, which
-    // never sees the mocked channels.
+    // Required because isolate-backed downloader store bypasses mocked channels.
     FileDownloader(persistentStorage: MemoryStorage());
   });
 
@@ -35,9 +34,7 @@ void main() {
     channels = FakeChannels()..install();
     downloads = Downloads(db);
     router = buildRouter(db);
-    // The app widget walks the index on the first start. An empty index ends
-    // that walk at once. A failing one would be retried after a backoff and
-    // that timer outlives the tree these tests tear down.
+    // Empty index prevents startup sync retry timers outliving test teardown.
     stubApi({'index': <Object>[]});
   });
 
@@ -184,7 +181,6 @@ void main() {
     router.go('/lernen?liste=${list.id}');
     await tester.pumpAndSettle();
 
-    // Only the one word in the list, not both cached entries.
     expect(find.text('1'), findsOneWidget);
     await drain(tester);
   });

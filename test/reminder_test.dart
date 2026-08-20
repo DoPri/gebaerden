@@ -9,7 +9,7 @@ import 'channels.dart';
 const _daily = Reminder(days: {1, 2, 3, 4, 5, 6, 7}, hour: 19, minute: 0);
 const _weekdays = Reminder(days: {1, 2, 3, 4, 5}, hour: 8, minute: 0);
 
-/// Everything that talks to the plugin. The pure parts sit in notify_test.dart.
+/// Tests platform notification channel interactions.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -139,8 +139,7 @@ void main() {
   });
 
   test('taking it back cancels the alarms and nothing else', () async {
-    // 1000 and up belongs to a running download. cancelAll used to take that
-    // notification down together with the alarms.
+    // IDs >= 1000 belong to downloads; cancelReminders must only clear reminder IDs.
     channels.pending = [
       {'id': 1, 'title': 'Gebärden üben', 'body': 'egal'},
       {'id': 2, 'title': 'Gebärden üben', 'body': 'egal'},
@@ -178,8 +177,7 @@ void main() {
   });
 
   test('a tap that started the app cold still reaches the trainer', () async {
-    // The callback from initialize never fires for this one, the answer waits
-    // in the launch details until the app asks.
+    // Cold launch notification payload is retrieved via getNotificationAppLaunchDetails.
     channels.launchPayload = '${reminderPayload}kueche';
     final opened = <String>[];
     reminderTapHandler = opened.add;

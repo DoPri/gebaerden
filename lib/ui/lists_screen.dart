@@ -40,7 +40,7 @@ class _ListsScreenState extends State<ListsScreen> {
   void initState() {
     super.initState();
     _load();
-    // Renaming or deleting happens on the detail screen, which pops back here.
+    // Detail screen mutations affect list counts and names.
     _watch = widget.db
         .tableUpdates(
           TableUpdateQuery.onAllTables([widget.db.lists, widget.db.listItems]),
@@ -226,7 +226,6 @@ class _ListsScreenState extends State<ListsScreen> {
   }
 }
 
-/// Shows what the file holds and asks once before creating the list.
 Future<void> receiveListFile(
   BuildContext context,
   AppDatabase db,
@@ -276,7 +275,6 @@ Future<void> _tell(BuildContext context, String message) async {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
-/// Entry point for a .dgsliste someone sent through a messenger.
 Future<void> openSharedPath(
   BuildContext context,
   AppDatabase db,
@@ -288,7 +286,6 @@ Future<void> openSharedPath(
   await receiveListFile(context, db, text);
 }
 
-/// Writes the file to the cache and hands it to the system share sheet.
 Future<void> shareList(AppDatabase db, StoredList list) async {
   final text = await encodeList(db, list);
   final file = await textFile(listFileName(list.name), text);
@@ -422,8 +419,7 @@ class _ListScreenState extends State<ListScreen> {
           child: Container(height: 1, color: c.border),
         ),
       ),
-      // The reminder belongs to the list, not to its contents, so it stands
-      // even while the list is still empty.
+      // Reminders are scoped to the list itself, independent of entry count.
       body: insetSides(
         Column(
           children: [
@@ -436,8 +432,7 @@ class _ListScreenState extends State<ListScreen> {
                     label: 'Diese Liste lernen',
                     icon: Icons.school_outlined,
                     filled: true,
-                    // go, not push. The trainer sits in the tab shell and
-                    // pushing that on top of itself reuses its navigator.
+                    // Use go() to switch tab branch instead of pushing onto current stack.
                     onPressed: () => context.go('/lernen?liste=${widget.id}'),
                   ),
                 ),
@@ -494,7 +489,7 @@ Future<String?> _ask(BuildContext context, String title, String initial) {
   );
 }
 
-/// The controller has to outlive the closing animation, so a widget owns it.
+// State owns controller to outlive dialog dismiss animation.
 class _AskDialog extends StatefulWidget {
   const _AskDialog({required this.title, required this.initial});
 

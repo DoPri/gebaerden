@@ -79,47 +79,42 @@ void main() {
     );
   });
 
-  test(
-    'the concurrency cap survives a caller barging into a handover',
-    () async {
-      var active = 0;
-      var peak = 0;
-      final gates = <Completer<void>>[];
+  test('the concurrency cap survives a caller barging into a handover', () async {
+    var active = 0;
+    var peak = 0;
+    final gates = <Completer<void>>[];
 
-      useClient(
-        MockClient((_) async {
-          active++;
-          peak = active > peak ? active : peak;
-          // Held open, so the queue behind it can be observed.
-          final gate = Completer<void>();
-          gates.add(gate);
-          await gate.future;
-          active--;
-          return _json({'data': <String, Object?>{}});
-        }),
-      );
+    useClient(
+      MockClient((_) async {
+        active++;
+        peak = active > peak ? active : peak;
+        // Hold request open to test queue behavior.
+        final gate = Completer<void>();
+        gates.add(gate);
+        await gate.future;
+        active--;
+        return _json({'data': <String, Object?>{}});
+      }),
+    );
 
-      // Four on the wire, four in the queue behind them.
-      final calls = [for (var i = 0; i < 8; i++) gql('query {}')];
-      await Future<void>.delayed(const Duration(milliseconds: 400));
-      expect(peak, 4, reason: 'four at a time is the cap');
+    final calls = [for (var i = 0; i < 8; i++) gql('query {}')];
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    expect(peak, 4, reason: 'four at a time is the cap');
 
-      // A request started the instant another finishes is exactly the window
-      // in which one freed slot could go out to two callers.
-      final barge = calls.first.then((_) => gql('query {}'));
-      gates.first.complete();
-      await Future<void>.delayed(const Duration(milliseconds: 600));
+    // Test race condition where immediate follow-up might exceed concurrency cap.
+    final barge = calls.first.then((_) => gql('query {}'));
+    gates.first.complete();
+    await Future<void>.delayed(const Duration(milliseconds: 600));
 
-      expect(peak, 4, reason: 'the freed slot went to the queue, not to both');
+    expect(peak, 4, reason: 'the freed slot went to the queue, not to both');
 
-      // Let the rest through, so no request is left hanging on its gate.
-      final pump = Timer.periodic(const Duration(milliseconds: 20), (_) {
-        for (final gate in [...gates]) {
-          if (!gate.isCompleted) gate.complete();
-        }
-      });
-      await Future.wait([...calls, barge]);
-      pump.cancel();
-    },
-  );
+    // Unblock pending gates to allow clean shutdown.
+    final pump = Timer.periodic(const Duration(milliseconds: 20), (_) {
+      for (final gate in [...gates]) {
+        if (!gate.isCompleted) gate.complete();
+      }
+    });
+    await Future.wait([...calls, barge]);
+    pump.cancel();
+  });
 }

@@ -75,8 +75,7 @@ void main() {
       await tester.tap(find.text('Auflösen'));
       await tester.pumpAndSettle();
 
-      // Both land before the write is back, so the second one has to be
-      // ignored. Counting it would log the card twice and skip the next.
+      // Fast duplicate tap before write finishes must be ignored.
       await tester.tap(find.text('Gut'), warnIfMissed: false);
       await tester.tap(find.text('Gut'), warnIfMissed: false);
       await settle(tester);
@@ -165,7 +164,6 @@ void main() {
       await settings.load();
       await settings.set('newPerDay', 4);
 
-      // Two new cards already answered today.
       for (final id in [1, 2]) {
         await gradeCard(
           db,

@@ -163,7 +163,7 @@ void main() {
 
   group('charset screen', () {
     testWidgets('asks for a letter and offers four answers', (tester) async {
-      // The mapping is cached, so no network round trip is needed.
+      // Pre-populates settings to avoid network requests.
       final chars = ['a', 'b', 'c', 'd', 'e'];
       final rows = await cacheEntries(db, [
         for (final (i, c) in chars.indexed)

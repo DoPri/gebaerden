@@ -4,26 +4,16 @@ Status: accepted
 
 ## Context
 
-The scheduler is FSRS, the algorithm Anki uses. The Dart port differs from the
-`ts-fsrs` package the earlier Svelte version ran on. Its weights are not the
-same, it has no New state, and it offers no rollback. It also dereferences
-stability once a card is past learning, so a corrupted row can take the trainer
-down.
+The scheduler uses FSRS. The `dart-fsrs` port differs from the `ts-fsrs` package used in the earlier web version (different weights, no explicit New state, no rollback). Dereferencing stability on post-learning cards can crash the trainer.
 
 ## Decision
 
-`dart-fsrs` is used as it is. A card without stability counts as unlearned,
-which stands in for the missing New state. Undo replays the snapshot the review
-row carries, since there is nothing to roll back to otherwise.
+`dart-fsrs` is used directly. Cards without stability count as unlearned (simulating a New state). Undo replays the snapshot from the review row.
 
-Card ids are `entryId:direction`, so the two directions of one word stay apart
-and a merge can compare them.
-
-Because the weights differ, backups from the Svelte version do not import.
+Card IDs format as `entryId:direction` to separate learning directions.
 
 ## Consequences
 
-Settled, not reopened. A user coming from the web version starts over.
+Backups from the legacy Svelte version cannot be imported.
 
-Suspension at eight lapses and the daily limits are ours, `dart-fsrs` does not
-track them. The review log is the counter, there is no extra bookkeeping.
+Suspension after eight lapses and daily limits are tracked locally via the review log, bypassing `dart-fsrs` for these features.

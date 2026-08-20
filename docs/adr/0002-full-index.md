@@ -4,33 +4,14 @@ Status: accepted
 
 ## Context
 
-`search(letter:)` folds Ä, Ö and Ü onto A and hands back the A list for all
-three. Walked letter by letter it misses roughly 600 entries.
-
-`index()` is the only complete view. Its `perPage` is capped at 100 by the
-server, and it runs by id ascending, so its tail holds pages of search scanner
-junk without video.
-
-The trainer draws its candidates from the entry cache. Nothing used to fill
-that cache, so a fresh install opened the learn tab on zero new and zero due.
+`search(letter:)` folds Ä, Ö, and Ü onto A, missing roughly 600 entries. `index()` provides the only complete view, capping at 100 per page ascending by ID.
 
 ## Decision
 
-The corpus walk pages through `index()` and writes the result into the entry
-cache. The completion marker is written last, so a walk that broke off halfway
-is not remembered as complete.
+The corpus walk pages through `index()` to populate the entry cache. The completion marker is written last to prevent partial walks from registering as complete.
 
-The newest entries are read by walking back from the last page, skipping the
-scanner junk until enough real signs turn up. The last reached page is stored
-as a hint for the next run.
-
-Letter search stays for browsing a single letter, where the umlaut folding is
-visible and harmless.
+The newest entries are found by walking backward from the last page, skipping scanner junk. Letter search remains only for browsing single letters.
 
 ## Consequences
 
-A full walk costs a few hundred kilobytes. It fetches metadata, not footage,
-so it is nowhere near the half gigabyte the videos would be.
-
-The walk runs unwatched while the app boots and never throws. Offline is the
-ordinary case and not worth a message.
+Full walks require minimal data transfer (metadata only). The walk runs in the background on startup without UI interruption.

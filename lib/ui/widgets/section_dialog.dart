@@ -11,9 +11,6 @@ const sectionNames = {
   BackupSection.reminders: 'Erinnerungen',
 };
 
-/// What an export writes or what an import takes reads. On the way back the
-/// picker only offers what the file actually holds, and the mode row comes
-/// with it.
 class SectionChoice {
   const SectionChoice(this.sections, this.mode);
 

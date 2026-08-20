@@ -1,4 +1,4 @@
-// Narrow import, drift also exports isNull and isNotNull.
+// Avoids name collision with flutter_test isNull/isNotNull.
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fsrs/fsrs.dart' as f;
@@ -89,7 +89,6 @@ void main() {
     test('due cards come before new ones, oldest debt first', () async {
       await seed(3);
       final past = DateTime.now().subtract(const Duration(days: 1));
-      // Entry 2 is the older debt.
       for (final (entryId, hoursOverdue) in [(1, 2), (2, 5)]) {
         final card = await getOrCreateCard(db, entryId, Direction.recognition);
         await db
@@ -126,7 +125,7 @@ void main() {
       await seed(1);
       var card = await getOrCreateCard(db, 1, Direction.recognition);
 
-      // Fresh and forgotten is not a lapse.
+      // Initial learning failure is not counted as lapse.
       card = await gradeCard(db, card, f.Rating.again);
       expect(card.lapses, 0);
 
@@ -151,8 +150,7 @@ void main() {
 
     test('a row without stability does not kill the trainer', () async {
       await seed(1);
-      // Only a corrupted database can produce this and dart-fsrs
-      // dereferences stability unchecked.
+      // Guards against unchecked null dereference in dart-fsrs.
       final broken = (await getOrCreateCard(
         db,
         1,
@@ -243,7 +241,6 @@ void main() {
         );
       }
 
-      // The day a list spends on its budget leaves the other one untouched.
       expect((await reviewedToday(db, entryIds: [1])).total, 1);
       expect((await reviewedToday(db, entryIds: [1, 2])).total, 2);
       expect((await reviewedToday(db, entryIds: [])).total, 0);

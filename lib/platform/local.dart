@@ -1,3 +1,3 @@
-// Offline downloads are a native-only feature.
+// Offline downloads are native-only.
 
 export 'local_io.dart' if (dart.library.js_interop) 'local_web.dart';

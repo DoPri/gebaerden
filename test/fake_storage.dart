@@ -1,7 +1,6 @@
 import 'package:background_downloader/background_downloader.dart';
 
-/// The real storage runs on its own isolate, which never sees the mocked
-/// platform channels. This one keeps everything in memory.
+/// In-memory storage because real isolate storage bypasses mocked platform channels.
 class MemoryStorage implements PersistentStorage {
   final _records = <String, TaskRecord>{};
   final _paused = <String, Task>{};

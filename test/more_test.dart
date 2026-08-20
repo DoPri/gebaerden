@@ -28,7 +28,7 @@ void main() {
     db = testDb();
     channels = FakeChannels()..install();
     tmp = Directory.systemTemp.createTempSync('more_test');
-    // main() does this before any screen is up.
+    // Mirrors main() startup initialization.
     await initNotifications();
   });
 
@@ -103,8 +103,7 @@ void main() {
     });
 
     testWidgets('a damaged section is named after the picker', (tester) async {
-      // The picker only reads which sections are there. What is inside them
-      // falls apart one step later, with the dialog already gone.
+      // Section parse errors surface after picker dialog dismissal.
       final file = File('${tmp.path}/kaputt.json')
         ..writeAsStringSync(
           jsonEncode({
@@ -196,7 +195,6 @@ void main() {
 
       await open(tester, find.text('Gebärden herunterladen'));
 
-      // One word, both of its files.
       expect(find.text('1 Gebärde, 2.0 MB'), findsOneWidget);
       await drain(tester);
     });

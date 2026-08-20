@@ -7,8 +7,7 @@ import 'package:http/http.dart' as http;
 import 'harness.dart';
 import 'support.dart';
 
-/// The api answers pages 1 to [last], everything above is empty. Entries on the
-/// last page carry no video, the way the real tail looks.
+/// Stubs paginated index API with trailing video-less entries.
 void stubIndex(int last, {int perPage = 3}) {
   stubPer((body) {
     final page = int.parse(RegExp(r'"page":(\d+)').firstMatch(body)!.group(1)!);

@@ -31,9 +31,7 @@ Future<void> main() async {
 
   db = AppDatabase();
 
-  // Before the queue. start() mirrors the package rows into the shade right
-  // away, and an uninitialized plugin has no small icon, which the native side
-  // answers with a NullPointerException instead of a notification.
+  // Must initialize notifications before download manager to prevent crash.
   await initNotifications();
 
   downloads = Downloads(db);
@@ -76,10 +74,7 @@ class _GebaerdenAppState extends State<GebaerdenApp>
     reminderTapHandler = _openReminder;
     _listenForSharedFiles();
     unawaited(_refreshReminder());
-    // The trainer counts what the entry cache holds and nothing but browsing
-    // used to fill it, so a fresh install opened Lernen on zero and zero.
-    // Unwatched on purpose since this is metadata off the index, the app has to be
-    // usable meanwhile and no network must not hold the start up.
+    // Non-blocking sync populates entry cache for fresh installs.
     unawaited(syncDictionaryOnce(widget.db));
   }
 
@@ -94,24 +89,19 @@ class _GebaerdenAppState extends State<GebaerdenApp>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed) return;
-    // The native queue keeps running while we are gone, so catch up on return.
+    // Sync downloads with background progress on resume.
     unawaited(downloads.reconcile());
     unawaited(_refreshReminder());
-    // A first start without signal leaves the trainer without words and the
-    // marker is only set once the walk got through. Coming back is the moment
-    // to try again. After that it costs one read of a single row.
+    // Retry dictionary cache sync on app resume if initial attempt failed.
     unawaited(syncDictionaryOnce(widget.db));
   }
 
-  /// The reminder text carries a due count, which is stale the next morning.
-  /// Each one counts its own list.
   Future<void> _refreshReminder() async {
     await refreshReminders(
       await dueReminders(widget.db, widget.settings.directions),
     );
   }
 
-  /// A tap on a reminder belongs in the trainer of the list that sent it.
   void _openReminder(String listId) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _router.go('/lernen?liste=$listId');
@@ -119,13 +109,12 @@ class _GebaerdenAppState extends State<GebaerdenApp>
   }
 
   void _listenForSharedFiles() {
-    // receive_sharing_intent has no web implementation, its channel would
-    // throw. Nothing hands a file to a browser tab anyway.
+    // receive_sharing_intent lacks web support.
     if (kIsWeb) return;
     _shared = ReceiveSharingIntent.instance.getMediaStream().listen(
       _openShared,
     );
-    // The navigator has to be there before a dialog can go up.
+    // Wait for navigator to mount before presenting dialog.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await handleNotificationLaunch();
       await _openShared(await ReceiveSharingIntent.instance.getInitialMedia());
@@ -158,12 +147,7 @@ class _GebaerdenAppState extends State<GebaerdenApp>
             theme: appTheme(Brightness.light, widget.settings.accent),
             darkTheme: appTheme(Brightness.dark, widget.settings.accent),
             themeMode: widget.settings.themeMode,
-            // The screens in the tab shell carry no AppBar, so nothing else
-            // would tell the system bars which way to draw their icons. Sits
-            // inside the app, where the resolved brightness is known and
-            // themeMode system is already accounted for.
-            // The tour sits above the router, so its spotlight stays on top
-            // of a pushed screen as well.
+            // Sets system bar icon contrast without AppBar; wraps tour above router.
             builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
               value: systemOverlay(Theme.of(context).brightness),
               child: Tour(db: widget.db, router: _router, child: child!),

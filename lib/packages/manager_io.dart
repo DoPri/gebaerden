@@ -1,6 +1,3 @@
-// The native download queue. background_downloader has no web build and
-// imports dart:io, so nothing here is reachable from the web build.
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -19,7 +16,6 @@ import 'spec.dart';
 
 export 'spec.dart';
 
-/// The queue is there, so the screens that drive it are worth showing.
 const downloadsAvailable = true;
 
 const _folder = 'media';
@@ -30,64 +26,45 @@ String _fileName(int videoId, AssetKind kind) =>
 
 String _taskId(int videoId, AssetKind kind) => '$videoId-${kind.name}';
 
-/// The native side keeps the queue, so downloads survive the app being frozen
-/// or swiped away.
 class Downloads {
   Downloads(this._db);
 
   final AppDatabase _db;
   StreamSubscription<TaskUpdate>? _sub;
 
-  /// A package of several thousand files fires as many updates. Recounting on
-  /// each one would read the whole task table every time.
+  // Debounce task table queries across bulk updates.
   final _dirty = <String>{};
   Timer? _flush;
 
-  /// One refresh per package at a time, plus a note to run it again.
   final _refreshing = <String>{};
   final _rerun = <String>{};
 
   Future<void> start() async {
-    // The listener has to stand first, what follows replays updates.
+    // Must listen before resumeFromBackground replays updates.
     _sub = FileDownloader().updates.listen(_onUpdate);
 
-    // An ongoing notification outlives the process, and a package that was
-    // cancelled while the app was gone has no row left to take it down.
+    // Clear stale notifications from killed processes.
     await hideAllPackages();
     _rows = _db.select(_db.packages).watch().listen(_mirrorAll);
 
-    // The buttons in the shade end up here. Whoever runs the queue answers
-    // them, so there is no wiring left for main to forget.
     packageActionHandler = _onPackageAction;
 
-    // Without a foreground service Android ends a task after nine minutes and
-    // drops the rest soon after the app goes away. The screen promises the
-    // opposite. A running notification is the price, it is configured above.
+    // Android kills background tasks after 9 minutes without foreground service.
     await FileDownloader().configure(
       androidConfig: (Config.runInForeground, Config.always),
     );
 
     await FileDownloader().trackTasks();
-    // Whatever the native side finished while the app was gone is buffered
-    // until it is asked for. Without this the records stay at the state of
-    // the last suspend, and every count below is read off stale rows.
+    // Replay background completions buffered while app was suspended.
     await FileDownloader().resumeFromBackground();
     await reconcile();
 
-    // Tasks that were killed along with the app are gone from the native
-    // queue, only their records are left. This puts them back. It runs after
-    // reconcile because it drops the very records reconcile reads.
+    // Drops orphaned records before reviving valid killed tasks.
     await _dropOrphans();
     await FileDownloader().rescheduleKilledTasks();
   }
 
-  /// Throws away the open records of every package that is not running.
-  ///
-  /// Stopping a package deletes its records, but the app does not always live
-  /// long enough to finish that. What was left behind looked to
-  /// rescheduleKilledTasks like a task that wanted to come back, so an aborted
-  /// download started itself again on the next launch. Only a package the
-  /// screen still shows as running may be revived.
+  // Prevent rescheduleKilledTasks from restarting aborted packages.
   Future<void> _dropOrphans() async {
     final running = {
       for (final row in await (_db.select(
@@ -97,23 +74,15 @@ class Downloads {
     };
 
     for (final record in await FileDownloader().database.allRecords()) {
-      // Finished records stay: reconcile and the counts read them.
       if (record.status.isFinalState) continue;
       if (running.contains(record.task.group)) continue;
       await FileDownloader().database.deleteRecordWithId(record.taskId);
     }
   }
 
-  /// The shade follows the package table, nothing else.
-  ///
-  /// Driven by the table's own change stream, not by the code that starts,
-  /// pauses or cancels: those must not wait on a platform call, and an extra
-  /// read of their own was enough to deadlock the widget tests. This way the
-  /// notification cannot say anything the offline screen does not say, because
-  /// both read the same rows.
+  // Avoid platform call delays in start/pause/cancel and prevent test deadlocks.
   StreamSubscription<List<StoredPackage>>? _rows;
 
-  /// What the shade already shows, so an unchanged row is not posted again.
   final _shown = <String, String>{};
 
   Future<void> _mirrorAll(List<StoredPackage> rows) async {
@@ -155,8 +124,7 @@ class Downloads {
 
   Future<void> _onUpdate(TaskUpdate update) async {
     if (update is! TaskStatusUpdate) return;
-    // Nobody here asks for a pause, that goes through cancel. The system does,
-    // when a task times out or the network drops, and then it waits for us.
+    // System pauses on timeout or network loss; auto-resume immediately.
     final task = update.task;
     if (update.status == TaskStatus.paused && task is DownloadTask) {
       unawaited(FileDownloader().resume(task));
@@ -174,11 +142,7 @@ class Downloads {
     });
   }
 
-  /// Counting a package of several thousand files takes seconds, and a new
-  /// timer fires every 400 milliseconds. Left alone, a dozen of these ran at
-  /// once and the slowest wrote its stale snapshot last: the job flipped
-  /// between running and done, so the bar vanished and came back, and the
-  /// counts jumped around.
+  // Prevent concurrent DB scans from writing stale progress out of order.
   Future<void> _refresh(String group) async {
     if (!_refreshing.add(group)) {
       _rerun.add(group);
@@ -226,10 +190,7 @@ class Downloads {
     final stopped = records.any((r) => r.status == TaskStatus.canceled);
     final bytes = await _bytes(records);
 
-    // Counting takes seconds on a package of several thousand files, long
-    // enough for a pause to land in between. Reading the row and writing it
-    // back therefore happens in one go. Otherwise this puts back the running
-    // it saw before the pause and the package carries on.
+    // Atomic read-modify-write prevents overwriting a concurrent pause.
     await _db.transaction(
       () => _write(group, done, failed, open, settled, stopped, bytes),
     );
@@ -249,45 +210,30 @@ class Downloads {
     )..where((t) => t.id.equals(group))).getSingleOrNull();
     if (row == null) return;
 
-    // The user asked for the stop, so nothing here touches the row: not the
-    // status, not the counts. Only a resume or a cancel leaves this state.
     if (row.status == PackageStatus.paused) return;
 
     final status = switch (row.status) {
       _ when open > 0 => PackageStatus.running,
-      // A record appears when the native side takes a task on, so early in a
-      // big package every record it knows can be complete at once. Without the
-      // plan as the yardstick that read as done, at 411 of 8488 files.
+      // Downloader records only exist once enqueued; total is the true yardstick.
       _ when settled < row.total => PackageStatus.running,
-      // Single files are missing upstream, a 403 on a thumbnail is normal.
-      // Failing the whole package over one of them dropped it out of the job
-      // list, which shows running, paused and queued, and the download looked
-      // like it had vanished. Only a package that got nothing is an error.
+      // Upstream 403s on single assets are non-fatal unless all files fail.
       _ when failed > 0 && done == 0 => PackageStatus.error,
-      // All canceled and the row was not paused: keep what it had rather than
-      // call it done, a resume re-enqueues what is missing.
       _ when stopped => row.status,
       _ => PackageStatus.done,
     };
 
-    // total stays what startPackage planned. Counting the records instead let
-    // the number climb while enqueueAll was still walking the list, so the bar
-    // ran backwards and never reached its end.
     await (_db.update(_db.packages)..where((t) => t.id.equals(group))).write(
       PackagesCompanion(
         done: Value(done),
         bytes: Value(bytes),
         status: Value(status),
-        // Kept even when the package counts as done, it is the only trace of
-        // what was left behind.
         error: Value(failed == 0 ? null : '$failed Dateien fehlen'),
         updatedAt: Value(DateTime.now()),
       ),
     );
   }
 
-  /// What this group holds on disk. The task ids carry the video, so the query
-  /// stays on those rows instead of reading every asset on every progress tick.
+  // Scope asset query to video IDs extracted from task IDs.
   Future<int> _bytes(List<TaskRecord> records) async {
     final mine = records.map((r) => r.taskId).toSet();
     final videoIds = <int>{
@@ -298,7 +244,6 @@ class Downloads {
     final rows = await (_db.select(
       _db.assets,
     )..where((t) => t.videoId.isIn(videoIds))).get();
-    // Video and thumbnail share a videoId, so the kind still has to match.
     return rows
         .where((a) => mine.contains(_taskId(a.videoId, a.kind)))
         .fold<int>(0, (sum, a) => sum + a.bytes);
@@ -308,7 +253,7 @@ class Downloads {
     switch (spec) {
       case AllPackage():
         final all = <CachedEntry>[];
-        // Letter search misses ~600 entries.
+        // Letter search index is incomplete.
         await for (final batch in iterateIndex()) {
           all.addAll(await cacheEntries(_db, batch));
         }
@@ -355,8 +300,7 @@ class Downloads {
             group: group,
             updates: Updates.statusAndProgress,
             retries: 3,
-            // Lets the system park a task instead of failing it when it times
-            // out or the network drops. _onUpdate picks it back up.
+            // Parks task on timeout/network drop instead of failing.
             allowPause: true,
             metaData: jsonEncode({
               'videoId': video.id,
@@ -370,14 +314,11 @@ class Downloads {
     return tasks;
   }
 
-  /// The downloader shows no notification at all without this, and a package
-  /// that reports nothing while the app is away looks stuck.
   Future<void> _askForNotifications() async {
     final permissions = FileDownloader().permissions;
     const type = PermissionType.notifications;
     if (await permissions.status(type) == PermissionStatus.granted) return;
-    // The answer arrives through a native callback. If it never does, the
-    // download still has to start, so this waits with an end to it.
+    // Guard against hanging native permission callback.
     await permissions
         .request(type)
         .timeout(
@@ -405,8 +346,7 @@ class Downloads {
 
     try {
       final tasks = await _tasks(spec.id, await _resolve(spec));
-      // The records of an earlier run would be counted into this one, and a
-      // resumed package would report more finished files than it has to fetch.
+      // Prevent old task records from skewing progress counts.
       await FileDownloader().database.deleteAllRecords(group: spec.id);
       await (_db.update(
         _db.packages,
@@ -422,8 +362,7 @@ class Downloads {
         ),
       );
       await _enqueue(spec.id, tasks);
-      // Object, not Exception. A cast that fails on unexpected api json is an
-      // Error, and letting it through would leave the row queued forever.
+      // Catch Error (e.g. JSON cast failures) to prevent stuck queued status.
     } on Object catch (err) {
       await (_db.update(
         _db.packages,
@@ -437,18 +376,9 @@ class Downloads {
     }
   }
 
-  /// Hands the tasks over in blocks and looks at the row between them.
-  ///
-  /// enqueueAll passes the whole list to the platform in one call, and the
-  /// native side then walks it on its own for minutes. A pause in that window
-  /// stopped the handful of tasks that had reached the queue while the loop
-  /// kept feeding thousands more behind it, so the download carried on and the
-  /// counters on the offline screen kept climbing. A block is small enough
-  /// that a stop takes hold within a second.
+  // Enqueue in chunks to allow fast pause/cancel response.
   static const _block = 50;
 
-  /// The hand-over that is currently running, per package, so a stop can wait
-  /// for it instead of racing it.
   final _feeding = <String, Future<void>>{};
 
   Future<void> _enqueue(String id, List<DownloadTask> tasks) async {
@@ -466,39 +396,20 @@ class Downloads {
       final row = await (_db.select(
         _db.packages,
       )..where((t) => t.id.equals(id))).getSingleOrNull();
-      // Paused, cancelled or gone: whatever is queued stays, nothing new.
       if (row == null || row.status != PackageStatus.running) return;
 
       await FileDownloader().enqueueAll(tasks.skip(at).take(_block));
     }
   }
 
-  /// Stops everything in the group and leaves nothing that could restart it.
-  ///
-  /// The records go first. They are the only trace a task leaves behind, and
-  /// rescheduleKilledTasks puts every enqueued one back on the next start. If
-  /// the app died while the queue was still draining, the paused or aborted
-  /// package simply carried on the next time it was opened.
-  ///
-  /// reset is a single call into the platform. cancelAll reads every task out
-  /// through an isolate and cancels them one by one from Dart, which took
-  /// minutes for a package of several thousand files and kept downloading for
-  /// all of it.
+  // reset avoids slow item-by-item cancel; record deletion prevents revival.
   Future<void> _stop(String id) async {
-    // The block still being handed to the platform has to land before the
-    // reset, otherwise it arrives after it and downloads on. The loop above
-    // reads the row between blocks and the row already says stop, so this
-    // waits for one block at most. No polling, no timers: a wall clock delay
-    // here never fires under the widget test clock and hung the suite.
+    // Ensure in-flight chunk finishes before reset.
     await _feeding[id];
     await FileDownloader().reset(group: id);
-    // Last, so nothing is left for rescheduleKilledTasks to bring back.
     await FileDownloader().database.deleteAllRecords(group: id);
   }
 
-  /// A button in the shade. The press lands on the main isolate, so it can go
-  /// straight to the queue. Nothing is awaited: the plugin hands us a void
-  /// callback and does not wait, and an unknown action is simply not ours.
   void _onPackageAction(String action, String group) {
     unawaited(switch (action) {
       'pause' => pausePackage(group),
@@ -508,9 +419,7 @@ class Downloads {
     });
   }
 
-  /// Pause drops the queue. Resuming re-walks it and skips what is on disk.
   Future<void> pausePackage(String id) async {
-    // The row goes first, so the screen answers the tap right away.
     await (_db.update(_db.packages)..where((t) => t.id.equals(id))).write(
       PackagesCompanion(
         status: const Value(PackageStatus.paused),
@@ -532,30 +441,25 @@ class Downloads {
   );
 
   Future<void> cancelPackage(String id) async {
-    // The row goes first, same as pausing. Once it is gone the refresh above
-    // ignores the group anyway.
     await (_db.delete(_db.packages)..where((t) => t.id.equals(id))).go();
     await _stop(id);
   }
 
-  /// Writes the rows for files the native side finished while the app was gone.
   Future<void> reconcile() async {
     final records = await FileDownloader().database.allRecords();
     final assets = await _db.select(_db.assets).get();
     final known = {for (final a in assets) _taskId(a.videoId, a.kind)};
 
-    // Only what is missing. Rewriting every finished task would mean thousands
-    // of writes on every return to the app.
+    // Avoid rewriting thousands of already cached asset records.
     for (final record in records) {
       if (record.status != TaskStatus.complete) continue;
       if (known.contains(record.taskId)) continue;
       await _record(record.task);
     }
 
-    // A row can outlive its file, for instance after the user clears storage.
+    // Purge records if files were deleted externally.
     final gone = assets.where((a) => !File(a.localPath).existsSync()).toList();
     if (gone.isNotEmpty) {
-      // By row, video and thumbnail can go missing one without the other.
       await _db.batch((b) {
         for (final asset in gone) {
           b.delete(_db.assets, asset);
@@ -563,10 +467,7 @@ class Downloads {
       });
     }
 
-    // A row on running with nothing open behind it is a leftover from a kill.
-    // Per group: one package that finished must not park another that runs.
-    // start() has replayed the missed updates by now, so the records are as
-    // fresh as they get without asking the platform, which costs an isolate.
+    // Running packages with no active native tasks were killed.
     final busy = records
         .where((r) => !r.status.isFinalState)
         .map((r) => r.task.group)
@@ -576,9 +477,7 @@ class Downloads {
       _db.packages,
     )..where((t) => t.status.equalsValue(PackageStatus.running))).get();
     for (final row in running.where((r) => !busy.contains(r.id))) {
-      // queued, not paused. paused is the user's word and _write keeps that
-      // one until a resume. A guess made here has to give way as soon as an
-      // update proves the package is running after all.
+      // Mark queued so subsequent updates can revive it; paused is user-only.
       await (_db.update(_db.packages)..where((t) => t.id.equals(row.id))).write(
         const PackagesCompanion(status: Value(PackageStatus.queued)),
       );
@@ -605,11 +504,8 @@ class Downloads {
   }
 }
 
-/// Set once at startup so screens can reach the queue without threading it
-/// through every constructor.
 late Downloads downloads;
 
-/// After a variant change, fetch the new clip if the entry is already offline.
 Future<void> refreshDownloadFor(AppDatabase db, int entryId) async {
   if (!await downloads.isDownloaded(entryId)) return;
   final entry = await getEntry(db, entryId);

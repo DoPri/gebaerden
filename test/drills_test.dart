@@ -126,7 +126,6 @@ void main() {
       await tester.tap(find.text('Prüfen'));
       await settle(tester);
 
-      // The card is re-queued and must be answerable again.
       expect(find.text('1 übrig'), findsOneWidget);
       expect(find.text('Prüfen'), findsOneWidget);
       expect(tester.widget<TextField>(find.byType(TextField)).enabled, isTrue);
@@ -138,7 +137,6 @@ void main() {
       await settings.load();
       await settings.set('mode', ReviewMode.choice.name);
       await seed(12);
-      // Everything but entry 12 is already known, so the deck holds one card.
       await addToList(db, knownList, [for (var i = 1; i <= 11; i++) i]);
 
       await tester.pumpWidget(await harness(db, LearnScreen(db: db)));
@@ -156,8 +154,6 @@ void main() {
       await tester.tap(find.text(wrong));
       await settle(tester);
 
-      // The card is re-queued and takes taps again. Answering it right ends
-      // the session.
       expect(find.text('1 übrig'), findsOneWidget);
       await tester.tap(find.text('Wort 12'));
       await settle(tester);
@@ -294,8 +290,7 @@ void main() {
       await tester.pumpWidget(await harness(db, ListsScreen(db: db)));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Begrüßung').last);
-      // Three retries with backoff pass before the error surfaces and the
-      // snackbar only stays for four seconds, so do not pump much further.
+      // Settles retry backoff before snackbar auto-dismissal timeout.
       await settle(tester, steps: 8);
 
       expect(
@@ -325,7 +320,7 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 300));
       });
       await tester.pumpAndSettle();
-      // The picker handed over on the real clock, so the rest runs there too.
+      // Subsequent actions must stay on real clock following picker handoff.
       await tester.runAsync(() async {
         await tester.tap(find.text('Übernehmen'));
         await Future<void>.delayed(const Duration(milliseconds: 300));

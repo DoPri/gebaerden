@@ -31,7 +31,7 @@ void main() {
   late Directory tmp;
 
   setUpAll(() {
-    // Must happen before anything touches the singleton.
+    // Required before accessing FileDownloader singleton.
     FileDownloader(persistentStorage: MemoryStorage());
   });
 
@@ -172,7 +172,7 @@ void main() {
     expect(status.online, isTrue);
     expect(notified, 2);
 
-    // The same state again says nothing.
+    // Redundant connectivity updates must not trigger listeners.
     channels.reportConnectivity(['mobile']);
     await Future<void>.delayed(Duration.zero);
     expect(notified, 2);
@@ -200,7 +200,7 @@ void main() {
 
     await tester.pumpWidget(
       MediaQuery(
-        // A landscape cutout on the left, the navigation bar on the right.
+        // Simulates left display cutout and right navigation bar in landscape.
         data: const MediaQueryData(
           padding: EdgeInsets.fromLTRB(60, 20, 90, 40),
         ),
@@ -218,8 +218,7 @@ void main() {
       ),
     );
 
-    // The sides are taken here. The vertical insets stay for the AppBar above
-    // and the list padding below, which is what handles them.
+    // Consumes horizontal padding while preserving vertical insets for scrolling/bars.
     expect(handedOn, const EdgeInsets.fromLTRB(0, 20, 0, 40));
 
     final box = tester.getRect(find.byType(SizedBox));
@@ -304,7 +303,7 @@ void main() {
   });
 }
 
-/// Answers every request with the same body.
+/// Returns static HTTP response body for all requests.
 class _FixedClient extends http.BaseClient {
   _FixedClient(this.body);
 
@@ -319,7 +318,7 @@ class _FixedClient extends http.BaseClient {
       );
 }
 
-/// Counts how many requests actually went out.
+/// Tracks outgoing HTTP request count.
 class _CountingClient extends http.BaseClient {
   _CountingClient(this.onSend);
 

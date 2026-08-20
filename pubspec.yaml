@@ -1,7 +1,7 @@
 name: gebaerden
 description: Deutsche Gebärdensprache lernen mit Videos von SignDict.
 publish_to: none
-version: 1.0.0-rc8+8
+version: 1.0.0-rc9+9
 
 environment:
   sdk: ^3.12.2

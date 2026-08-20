@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
-// The generated part names both the converters and the types they produce.
+// Imports required by generated part file.
 import '../api/types.dart';
 import 'converters.dart';
 import 'tables.dart';
@@ -11,8 +11,7 @@ export 'tables.dart';
 
 part 'database.g.dart';
 
-/// Both files sit in web/ and are pinned to the versions in pubspec.lock,
-/// sqlite3.wasm to sqlite3 and drift_worker.js to drift.
+// Web worker and wasm assets are pinned to pubspec.lock package versions.
 final _web = DriftWebOptions(
   sqlite3Wasm: Uri.parse('sqlite3.wasm'),
   driftWorker: Uri.parse('drift_worker.js'),
@@ -37,7 +36,6 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'gebaerden', web: _web));
 
-  /// A throwaway database on the device, so a test run leaves nothing behind.
   factory AppDatabase.forTesting() =>
       AppDatabase(driftDatabase(name: 'gebaerden_test', web: _web));
 
@@ -56,8 +54,7 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 3) {
         await m.createTable(reminders);
-        // A reminder belongs to a list now. The old global one has no list to
-        // belong to, so it goes and its alarms are cancelled on the next start.
+        // Reminders are scoped to lists; legacy global settings are removed.
         await (delete(
           settings,
         )..where((t) => t.key.isIn(const ['reminders', 'reminderAt']))).go();
@@ -88,5 +85,4 @@ class AppDatabase extends _$AppDatabase {
   );
 }
 
-/// Single instance for the running app. Tests build their own.
 late AppDatabase db;

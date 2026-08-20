@@ -59,8 +59,7 @@ class _EntryScreenState extends State<EntryScreen> {
     try {
       final fresh = await fetchEntry(widget.id);
       if (!mounted) return;
-      // A deleted or mistyped id answers with null rather than an error and
-      // the screen used to sit blank under its own app bar forever.
+      // Upstream returns null for missing or deleted IDs without error.
       if (fresh == null) {
         if (_entry == null) setState(() => _failed = true);
         return;
@@ -91,7 +90,7 @@ class _EntryScreenState extends State<EntryScreen> {
     if (entry == null) return;
     setState(() => _chosen = index);
     await setPreferred(widget.db, entry.id, _videos[index]);
-    // Keep the offline copy in step with what the drills will play.
+    // Keep offline download synced with chosen variant.
     await refreshDownloadFor(widget.db, entry.id);
   }
 

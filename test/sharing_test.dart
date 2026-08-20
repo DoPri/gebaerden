@@ -47,7 +47,7 @@ void main() {
     await tester.pumpWidget(await harness(db, ListScreen(db: db, id: list.id)));
     await tester.pumpAndSettle();
 
-    // Writing the file is real io, which needs the real clock.
+    // File I/O requires real async clock.
     await tester.runAsync(() async {
       await tester.tap(find.byTooltip('Liste teilen'));
       await Future<void>.delayed(const Duration(milliseconds: 200));
@@ -131,7 +131,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Real file io never resolves under the test clock, so read it directly.
+      // Avoids async test clock hangs during file I/O.
       unawaited(receiveListFile(ctx, db, file.readAsStringSync()));
       await tester.pumpAndSettle();
 
@@ -166,7 +166,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Real file io never resolves under the test clock, so read it directly.
+      // Avoids async test clock hangs during file I/O.
       unawaited(receiveListFile(ctx, db, file.readAsStringSync()));
       await tester.pumpAndSettle();
 
@@ -244,7 +244,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Real file io never resolves under the test clock, so read it directly.
+      // Avoids async test clock hangs during file I/O.
       unawaited(receiveListFile(ctx, db, file.readAsStringSync()));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Abbrechen'));

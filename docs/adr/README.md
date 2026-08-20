@@ -1,8 +1,6 @@
 # Decisions
 
-One record per decision that is expensive to reverse or that keeps being
-rediscovered. Each names the situation that forced it, so a later change can
-tell whether the reason still holds.
+Records of decisions that are expensive to reverse or frequently questioned. Each captures its context so future changes can verify if the reasoning still holds.
 
 - [0001 The dictionary comes from the SignDict API](0001-signdict-api.md)
 - [0002 The full index instead of letter search](0002-full-index.md)
@@ -14,8 +12,8 @@ tell whether the reason still holds.
 - [0008 Reminders are one alarm per weekday](0008-reminders.md)
 - [0009 Tab shell routes are reached with go](0009-tab-shell-routes.md)
 - [0010 The accent color is free and forced to contrast](0010-accent-contrast.md)
-- [0011 Three distribution channels, three signatures](0011-distribution-channels.md)
-- [0012 The web build reaches the API through a proxy](0012-web-api-proxy.md)
+- [0011 Four distribution channels](0011-distribution-channels.md)
+- [0012 The web build goes through a proxy](0012-web-api-proxy.md)
 - [0013 Offline downloads are native only](0013-downloads-are-native.md)
 - [0014 The web build ships what it loads](0014-web-assets-are-vendored.md)
 - [0015 The container serves the app and the API on one origin](0015-container-one-origin.md)

@@ -5,10 +5,8 @@ import 'theme.dart';
 
 enum ReviewMode { self, choice, typing }
 
-/// Which way round cards are asked.
 enum DirectionMode { recognition, production, both }
 
-/// Named once, so the stored default and the fallback below cannot drift apart.
 const _fallbackMode = ReviewMode.self;
 const _fallbackDirection = DirectionMode.recognition;
 
@@ -26,7 +24,6 @@ final _defaults = Map<String, Object?>.unmodifiable({
   'tourDone': false,
 });
 
-/// One table, so a new key needs no migration.
 class AppSettings extends ChangeNotifier {
   AppSettings(this._db);
 
@@ -56,8 +53,7 @@ class AppSettings extends ChangeNotifier {
 
   T _read<T>(String key) => _values[key] as T;
 
-  /// Numbers go through num. What arrives depends on the platform and on what
-  /// an imported file carried, 7 and 7.0 mean the same thing.
+  // Parse via num to accept integer or float JSON representations.
   int _whole(String key) => (_values[key]! as num).toInt();
 
   double _decimal(String key) => (_values[key]! as num).toDouble();
@@ -82,8 +78,7 @@ class AppSettings extends ChangeNotifier {
   bool get showWithoutVideo => _read<bool>('showWithoutVideo');
   bool get tourDone => _read<bool>('tourDone');
 
-  /// An imported file passes the type check with any string, so fall back
-  /// rather than throw on a name no enum carries.
+  // Fall back gracefully on unrecognized string values from imported backups.
   ReviewMode get mode => ReviewMode.values.firstWhere(
     (m) => m.name == _read<String>('mode'),
     orElse: () => _fallbackMode,

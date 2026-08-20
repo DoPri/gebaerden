@@ -41,7 +41,7 @@ void main() {
     final entry = await seed(videos: const [sampleVideo, _other]);
     await setPreferred(db, entry.id, _other);
 
-    // Upstream swaps the URL, the copy is stale.
+    // Stale cached URL replaced upstream.
     const refreshed = ApiVideo(
       id: 4711,
       videoUrl: 'https://example.invalid/neu.mp4',
@@ -63,7 +63,7 @@ void main() {
     var entry = await seed(videos: const [sampleVideo, _other]);
     await setPreferred(db, entry.id, _other);
 
-    // A list response without variants, like search returns.
+    // Search results omit variants.
     entry = entry.copyWith(videos: const Value(null));
     expect((await preferredVideo(db, entry))?.id, _other.id);
   });
@@ -72,7 +72,7 @@ void main() {
     var entry = await seed(videos: const [sampleVideo, _other]);
     await setPreferred(db, entry.id, _other);
 
-    // Upstream drops the variant and no copy is left.
+    // Selected variant deleted upstream.
     await (db.delete(
       db.variants,
     )..where((t) => t.entryId.equals(entry.id))).go();

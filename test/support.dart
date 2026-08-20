@@ -5,7 +5,7 @@ import 'package:drift/native.dart';
 import 'package:gebaerden/db/database.dart';
 
 AppDatabase testDb() {
-  // Two in-memory databases at once is the point in the transfer tests.
+  // Suppresses warnings when multiple in-memory DB instances run concurrently.
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   return AppDatabase(NativeDatabase.memory());
 }
@@ -38,7 +38,7 @@ ApiEntry sampleEntry({
   );
 }
 
-/// A transparent pixel, so a widget test can show an image without the net.
+/// 1x1 transparent PNG for offline widget image rendering.
 final onePixelPng = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk'
   'YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',

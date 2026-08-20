@@ -60,7 +60,7 @@ void main() {
     });
 
     test('forgives two swapped letters', () async {
-      // The most common typo of all and it costs two plain edits.
+      // Transpositions cost 2 Levenshtein edits.
       expect(
         (await offlineSearch(db, 'Huas')).map((e) => e.word),
         contains('Haus'),
@@ -93,7 +93,6 @@ void main() {
     });
 
     test('picks up a word rewritten under a standing id', () async {
-      // The row count never moves here, only the word does.
       expect((await offlineSearch(db, 'Haus')).first.word, 'Haus');
       await cacheEntries(db, [
         sampleEntry(id: 1, text: 'Hausboot', currentVideo: sampleVideo),

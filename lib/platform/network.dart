@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/widgets.dart';
 
-/// Whether the dictionary is reachable at all. Everything already downloaded
-/// keeps working either way.
 class NetworkStatus extends ChangeNotifier {
   var _online = true;
   StreamSubscription<List<ConnectivityResult>>? _sub;

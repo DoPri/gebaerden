@@ -4,32 +4,17 @@ Status: accepted
 
 ## Context
 
-Lists should travel between devices without an account or a server. Two
-platform details get in the way.
-
-Android rarely carries the file extension in the path of a `content:` URI, so
-an intent filter matching on `.dgsliste` does not always fire.
-
-`XFile.readAsString` ignores the encoding and falls back to latin-1 when the
-picker hands over bytes instead of a path, which is what Android always does.
-Umlauts arrive mangled.
+Android `content:` URIs often omit file extensions, causing `.dgsliste` intent filters to fail.
+`XFile.readAsString` defaults to latin-1 when given bytes instead of a path, mangling umlauts.
 
 ## Decision
 
-A list travels as a JSON file with the extension `.dgsliste`, carrying id and
-word per entry so the receiver sees the contents before any network round trip.
+Shared lists use JSON with a `.dgsliste` extension, containing both IDs and words.
 
-The manifest keeps both a loose and a strict intent filter, and the file picker
-under Listen is documented as the path that always works.
+The Android manifest includes both loose and strict intent filters. The file picker is the guaranteed fallback.
 
-Picked files go through `readText` in `lib/platform/files.dart`, which decodes
-UTF-8 itself. Malformed bytes become replacement characters and fail later in
-the parsers with their German message.
+Files are read via `readText` in `lib/platform/files.dart` to enforce UTF-8 decoding. Malformed bytes fail gracefully in parsers.
 
 ## Consequences
 
-Receiving through a messenger works most of the time and the picker covers the
-rest.
-
-iOS opens a shared list through the file picker and through "Öffnen mit". The
-share menu needs a share extension, which is not built yet.
+Sharing works via messengers usually, with the file picker covering edge cases. iOS share menu requires an unbuilt share extension.

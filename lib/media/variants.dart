@@ -2,7 +2,6 @@ import 'package:drift/drift.dart';
 
 import '../db/database.dart';
 
-/// Every screen resolves its video through this module.
 Future<void> setPreferred(AppDatabase db, int entryId, ApiVideo video) async {
   await db
       .into(db.variants)
@@ -20,7 +19,6 @@ Future<void> clearPreferred(AppDatabase db, int entryId) async {
   await (db.delete(db.variants)..where((t) => t.entryId.equals(entryId))).go();
 }
 
-/// Fresh beats the stored copy beats currentVideo.
 ApiVideo? _resolve(CachedEntry entry, StoredVariant? pick) {
   if (pick == null) return entry.currentVideo;
 
@@ -38,7 +36,6 @@ Future<ApiVideo?> preferredVideo(AppDatabase db, CachedEntry entry) async {
   return _resolve(entry, pick);
 }
 
-/// One query for a whole list.
 Future<Map<int, ApiVideo>> preferredVideos(
   AppDatabase db,
   List<CachedEntry> entries,

@@ -14,7 +14,7 @@ import 'package:http/testing.dart';
 
 import 'support.dart';
 
-/// Everything a screen expects to find above itself.
+/// Wraps [child] with required app providers, themes, and shell scaffold.
 Future<Widget> harness(
   AppDatabase db,
   Widget child, {
@@ -38,20 +38,18 @@ Future<Widget> harness(
         locale: appLocale,
         supportedLocales: appLocales,
         localizationsDelegates: appDelegates,
-        // Screens sit inside the shell's Scaffold in the app.
         home: Scaffold(body: child),
       ),
     ),
   );
 }
 
-/// The tour runs on a first start and lies over the whole app. Only the tour
-/// cases want to see it, everything that boots the app widget marks it seen.
+/// Marks onboarding tour completed to avoid overlaying app tests.
 Future<void> tourSeen(AppDatabase db) => db
     .into(db.settings)
     .insertOnConflictUpdate(const StoredSetting(key: 'tourDone', value: true));
 
-/// Answers every GraphQL query with the given data, so no test touches the net.
+/// Mocks GraphQL responses with static data to avoid network calls.
 void stubApi(Map<String, dynamic> data) {
   useClient(
     MockClient(
@@ -64,7 +62,7 @@ void stubApi(Map<String, dynamic> data) {
   );
 }
 
-/// Answers each query differently, so paging can be exercised.
+/// Mocks GraphQL responses per request body for pagination tests.
 void stubPer(Map<String, dynamic> Function(String body) answer) {
   useClient(
     MockClient(
@@ -77,8 +75,7 @@ void stubPer(Map<String, dynamic> Function(String body) answer) {
   );
 }
 
-/// Answers every exact-word lookup with the word itself and every entry
-/// lookup with its id, the way the api does for letters and topic words.
+/// Mocks word and entry lookups returning echoing test payloads.
 void stubEcho() {
   stubPer((body) {
     final query = (jsonDecode(body) as Map<String, dynamic>)['query'] as String;
@@ -111,16 +108,14 @@ void stubApiFailure() {
   useClient(MockClient((_) async => http.Response('nope', 500)));
 }
 
-/// Drives the debounce and the request forward. Never pumpAndSettle here, the
-/// busy indicator animates forever and would hang the test.
+/// Pumps fixed steps to advance debouncers; avoids infinite progress animation hangs.
 Future<void> settle(WidgetTester tester, {int steps = 8}) async {
   for (var i = 0; i < steps; i++) {
     await tester.pump(const Duration(milliseconds: 300));
   }
 }
 
-/// Tears the tree down and lets pending timers finish, so the binding does not
-/// complain about them at the end of a test.
+/// Unmounts widget tree and drains timers to prevent test runner leaks.
 Future<void> drain(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
   await tester.pump(const Duration(seconds: 1));

@@ -4,17 +4,12 @@ Status: accepted
 
 ## Context
 
-Roughly 38 percent of the corpus carries no footage. A sign language card
-without a clip has nothing to ask and nothing to answer.
+Roughly 38 percent of the corpus lacks video footage.
 
 ## Decision
 
-The deck is built only from entries with a playable video. The dictionary hides
-them too by default, with a setting that shows them.
+The trainer deck includes only entries with playable videos. The dictionary hides videoless entries by default.
 
 ## Consequences
 
-The counts in the learn tab are well below the corpus size, which is correct
-rather than a bug to chase.
-
-An entry that gains a video upstream enters the deck on the next cache write.
+Learn tab counts accurately reflect the playable subset of the corpus. Entries gaining video upstream are automatically added to the deck during the next cache write.

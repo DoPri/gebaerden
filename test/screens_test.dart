@@ -52,7 +52,6 @@ void main() {
       await tester.enterText(find.byType(TextField), 'Haus');
       await settle(tester);
 
-      // The query itself sits in the field, so look inside a row.
       expect(find.widgetWithText(EntryRow, 'Haus'), findsOneWidget);
     });
 
@@ -119,8 +118,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('nichts fällig'), findsOneWidget);
 
-      // On a fresh install the dictionary is fetched in the background and
-      // lands after this tab has already counted. It used to stay on zero.
+      // Tests reactivity when background dictionary sync finishes after mount.
       await seed(3);
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpAndSettle();
@@ -141,7 +139,6 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // The way back was missing entirely once a list was picked.
       expect(find.text('Alle Wörter'), findsOneWidget);
       expect(find.text('Küche'), findsOneWidget);
     });
@@ -195,7 +192,6 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
 
-      // The two fields start on the global setting.
       await tester.enterText(find.widgetWithText(TextFormField, '20'), '4');
       await tester.pumpAndSettle();
       await tester.enterText(find.widgetWithText(TextFormField, '200'), '8');
@@ -216,8 +212,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('5'), findsOneWidget);
 
-      // go_router keeps the State and swaps the widget, so the counts have to
-      // follow from didUpdateWidget or they stay on the old scope.
+      // Router reuses State; verifies didUpdateWidget updates scope counts.
       await tester.pumpWidget(
         await harness(db, LearnScreen(db: db, listId: list.id)),
       );
@@ -329,7 +324,6 @@ void main() {
       expect(find.text('System'), findsOneWidget);
       expect(find.text('Neue Karten'), findsOneWidget);
 
-      // The reminder moved onto the list it belongs to.
       expect(find.text('Erinnerung einrichten'), findsNothing);
       await tester.scrollUntilVisible(
         find.text('Exportieren'),
@@ -362,7 +356,7 @@ void main() {
       expect(find.text('0 B'), findsOneWidget);
       expect(find.text('Alle Gebärden'), findsOneWidget);
       expect(find.text('Leeren'), findsNothing);
-      // drift schedules a zero timer when a stream is cancelled.
+      // Flushes Drift zero-timer stream cancellation.
       await drain(tester);
     });
   });

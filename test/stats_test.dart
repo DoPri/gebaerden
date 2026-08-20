@@ -39,10 +39,7 @@ void main() {
     });
 
     test('a streak counts across both clock changes', () {
-      // Europe/Berlin moves the clock on the last Sunday of March and
-      // October. Under UTC these are ordinary days, so the test holds there
-      // too. Under the device zone it only passes when the shift lands back
-      // on midnight.
+      // DST shifts in March/October must normalize to midnight across timezones.
       final spring = {
         DateTime(2026, 3, 28),
         DateTime(2026, 3, 29),
@@ -181,7 +178,7 @@ void main() {
             ),
           );
 
-      // The clock change itself is today. Tomorrow is one calendar day away.
+      // Validates calendar-day calculation across 25-hour DST fall-back day.
       final stats = await collectStats(db, now: DateTime(2026, 10, 25, 12));
       expect(stats.forecast[1].count, 1);
     });

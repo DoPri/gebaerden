@@ -8,7 +8,6 @@ import '../../theme.dart';
 import '../../util/time.dart';
 import 'pieces.dart';
 
-/// Mirrors what signdict.org shows: still, contributor, age and license.
 class VariantList extends StatefulWidget {
   const VariantList({
     required this.db,

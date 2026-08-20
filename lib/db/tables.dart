@@ -18,7 +18,7 @@ enum RecentKind { search, entry }
 class Entries extends Table {
   IntColumn get id => integer()();
 
-  /// Not `text`, that name is taken by drift's own column builder.
+  /// Named `word` because `text` conflicts with drift's column builder.
   TextColumn get word => text()();
   TextColumn get type => text().nullable()();
   TextColumn get description => text().nullable()();
@@ -33,7 +33,6 @@ class Entries extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-/// Video and thumbnail share a videoId.
 @DataClassName('StoredAsset')
 class Assets extends Table {
   IntColumn get videoId => integer()();
@@ -47,7 +46,7 @@ class Assets extends Table {
   Set<Column> get primaryKey => {videoId, kind};
 }
 
-/// reps, lapses and suspended are ours, dart-fsrs does not track them.
+/// Tracks reps, lapses, and suspension not handled by dart-fsrs.
 @DataClassName('StoredCard')
 class Cards extends Table {
   TextColumn get id => text()();
@@ -67,7 +66,7 @@ class Cards extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-/// `before` is the card as it stood before the review. Undo replays it.
+/// Stores serialized prior card state for review undo.
 @DataClassName('StoredReview')
 class Reviews extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -86,8 +85,7 @@ class Lists extends Table {
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 
-  /// Null falls back to the setting. A list carries its own budget so a day
-  /// spent on one does not eat the next one's.
+  /// Independent daily budget per list; null falls back to global setting.
   IntColumn get newPerDay => integer().nullable()();
   IntColumn get reviewPerDay => integer().nullable()();
 
@@ -95,8 +93,7 @@ class Lists extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-/// A reminder belongs to a list and nothing else. Days are ISO, 1 is Monday,
-/// stored as the digits the encoding already used.
+/// Reminders are scoped to lists. Days stored as ISO weekday digits (1 = Monday).
 @DataClassName('StoredReminder')
 class Reminders extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -145,14 +142,12 @@ class Settings extends Table {
 class Recents extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get kind => textEnum<RecentKind>()();
-
-  /// Query text, or the entry id as a string.
   TextColumn get value => text()();
   TextColumn get label => text()();
   DateTimeColumn get at => dateTime()();
 }
 
-/// The video copy makes the row usable before the detail request.
+/// Caches video metadata for immediate display before detail request completes.
 @DataClassName('StoredVariant')
 class Variants extends Table {
   IntColumn get entryId => integer()();

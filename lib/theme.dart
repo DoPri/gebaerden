@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Converted from the OKLCH values the web version used.
+// Converted from OKLCH color palette.
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
   const AppColors({
@@ -111,7 +111,6 @@ extension AppColorsOf on BuildContext {
   AppColors get colors => Theme.of(this).extension<AppColors>()!;
 }
 
-/// Material's defaults run large here.
 const _sizes = {
   'headline': 24.0,
   'title': 18.0,
@@ -120,7 +119,6 @@ const _sizes = {
   'label': 11.0,
 };
 
-/// A handful of ready-made accents. The picker takes any color.
 const suggestedAccents = [
   (0xFF955E11, 'Ocker'),
   (0xFF9C4A2F, 'Ziegel'),
@@ -138,8 +136,7 @@ double _contrast(Color a, Color b) {
   return x > y ? x / y : y / x;
 }
 
-/// Walks the lightness until the color carries text on [on]. Any color has
-/// to stay readable, and the picker hands over whatever the user likes.
+// Adjusts lightness iteratively to ensure >= 4.5:1 WCAG contrast.
 Color _readable(Color base, Color on) {
   final up = on.computeLuminance() < 0.5;
   var hsl = HSLColor.fromColor(base);
@@ -177,15 +174,13 @@ OutlineInputBorder _field(Color color) => OutlineInputBorder(
   borderSide: BorderSide(color: color),
 );
 
-/// From Android 15 the app draws under the system bars and nothing else paints
-/// them, so the icons have to be told which way to go. Transparent throughout,
-/// the surface underneath is what shows.
+// Sets edge-to-edge transparent system bar icons (required on Android 15+).
 SystemUiOverlayStyle systemOverlay(Brightness brightness) {
   final dark = brightness == Brightness.dark;
   return SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: dark ? Brightness.light : Brightness.dark,
-    // iOS reads this the other way round.
+    // iOS inverts statusBarBrightness convention.
     statusBarBrightness: brightness,
     systemNavigationBarColor: Colors.transparent,
     systemNavigationBarDividerColor: Colors.transparent,
@@ -200,7 +195,6 @@ ThemeData appTheme(Brightness brightness, [int accent = defaultAccent]) {
   final dark = brightness == Brightness.dark;
   final c = accented(dark ? AppColors.dark : AppColors.light, accent);
 
-  // No webfont, so the system face on both platforms.
   final typography = Typography.material2021(platform: defaultTargetPlatform);
   final base = brightness == Brightness.dark
       ? typography.white
@@ -210,8 +204,7 @@ ThemeData appTheme(Brightness brightness, [int accent = defaultAccent]) {
     brightness: brightness,
     scaffoldBackgroundColor: c.bg,
     typography: typography,
-    // An AppBar sets its own overlay style, otherwise derived from its
-    // background, which would fight the one the app declares.
+    // Override default AppBar overlay style to match app theme.
     appBarTheme: AppBarTheme(systemOverlayStyle: systemOverlay(brightness)),
     colorScheme:
         ColorScheme.fromSeed(
@@ -267,7 +260,7 @@ ThemeData appTheme(Brightness brightness, [int accent = defaultAccent]) {
       focusedErrorBorder: _field(c.danger),
     ),
     extensions: [c],
-    // Ripples would read as stock Material.
+    // Suppress Material ink ripples.
     splashFactory: NoSplash.splashFactory,
     highlightColor: c.surface2,
   );

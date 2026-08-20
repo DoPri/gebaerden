@@ -83,7 +83,6 @@ void main() {
     await seed(db);
     final text = await exportBackup(db);
 
-    // The other device answered the same word twice.
     final other = testDb();
     addTearDown(other.close);
     await cacheEntries(other, [
@@ -174,7 +173,7 @@ void main() {
     final restored = await remindersFor(fresh, list.id);
     expect(restored.single.reminder.days, {1, 2, 3, 4, 5});
     expect(restored.single.reminder.time, '08:00');
-    // The id is device local, the row gets a fresh one on the way in.
+    // Device-local IDs are reassigned on import.
     expect(restored.single.id, isNotNull);
   });
 

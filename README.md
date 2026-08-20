@@ -1,8 +1,6 @@
 # DGS Lernen
 
-App for learning German Sign Language, built on the
-[SignDict](https://signdict.org) API. No backend, no account. Progress and
-lists stay on the device.
+App for learning German Sign Language, built on the [SignDict](https://signdict.org) API. Runs entirely on-device. Progress and lists stay local.
 
 ## Install
 
@@ -13,11 +11,9 @@ lists stay on the device.
     alt="Get it on Obtainium"
     height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium%3A%2F%2Fapp%2F%257B%2522id%2522%253A%2522gg.prinz.gebaerden%2522%252C%2522url%2522%253A%2522https%253A%252F%252Fgithub.com%252FDoPri%252Fgebaerden%2522%252C%2522author%2522%253A%2522DoPri%2522%252C%2522name%2522%253A%2522DGS%2520Lernen%2522%252C%2522preferredApkIndex%2522%253A0%252C%2522additionalSettings%2522%253A%2522%257B%255C%2522includePrereleases%255C%2522%253Afalse%252C%255C%2522fallbackToOlderReleases%255C%2522%253Atrue%252C%255C%2522autoApkFilterByArch%255C%2522%253Atrue%252C%255C%2522versionDetection%255C%2522%253Atrue%257D%2522%257D)
 
-The GitHub release carries one APK per architecture. Obtainium follows the
-same releases and picks the matching one by itself.
+The GitHub release provides one APK per architecture. Obtainium follows these releases automatically.
 
-Each file carries a build provenance attestation, so a download can be traced
-back to the workflow run that produced it:
+Verify the build provenance attestation:
 
 ```bash
 gh attestation verify app-arm64-v8a-release.apk --repo DoPri/gebaerden
@@ -31,8 +27,7 @@ dart run build_runner build
 flutter run
 ```
 
-The database is generated, so `build_runner` runs again after every change to
-`lib/db/tables.dart`.
+`build_runner` regenerates the database after changes to `lib/db/tables.dart`.
 
 ```bash
 flutter analyze
@@ -40,28 +35,19 @@ flutter test
 flutter test --coverage && python3 tools/coverage.py 95
 ```
 
-`pre-commit install` puts format, analysis and tests in front of every commit.
-Without it CI checks the same, plus coverage, a release build and the
-container image.
+`pre-commit install` adds format, analysis, and tests to every commit.
 
 ## Device tests
 
-`test/` runs without a device. Everything that touches the platform lives in
-`integration_test/` and needs a phone or an emulator:
+`test/` runs headless. `integration_test/` requires a phone or emulator:
 
 ```bash
-tools/integration.sh                                          # only device
-tools/integration.sh emulator-5554                            # a named one
+tools/integration.sh                                          # Any device
+tools/integration.sh emulator-5554                            # Specific device
 tools/integration.sh emulator-5554 integration_test/learn_test.dart
 ```
 
-The script grants `POST_NOTIFICATIONS` as soon as the app is on the device.
-The reminder cases need it and no test can do it for itself. `app_test.dart`
-goes against signdict.org and checks that the API still answers the way the
-app expects, `learn_test.dart` and `lists_test.dart` drive the real shell off
-seeded rows.
-
-The permission request itself is not covered by any of this.
+The script grants `POST_NOTIFICATIONS` on start to enable reminder tests. `app_test.dart` verifies the live signdict.org API. `learn_test.dart` and `lists_test.dart` drive the shell using seeded data.
 
 ## Builds
 
@@ -70,25 +56,18 @@ flutter build apk --release --split-per-abi
 flutter build ipa
 ```
 
-Android needs SDK 37 and a full JDK 17 or newer.
+Android requires SDK 37 and JDK 17+.
 
 ```bash
 export ANDROID_HOME="$HOME/Android/Sdk"
 sdkmanager "platform-tools" "platforms;android-37" "build-tools;36.0.0"
 ```
 
-Without `ANDROID_KEYSTORE` in the environment the release APK stays unsigned,
-which is what F-Droid expects. `RELEASING.md` covers publishing.
-
-iOS is built along but unverified, there is no device to test on.
+The release APK remains unsigned without `ANDROID_KEYSTORE` in the environment, supporting F-Droid distribution. See `RELEASING.md`.
 
 ## Web
 
-signdict.org answers without an `access-control-allow-origin` header, so a
-browser blocks every call to the API. The web build therefore needs a proxy in
-front of it. Also, the web version does not have download capabilities.
-
-See the "Container" section below for a quickstart.
+The web build uses a proxy to bypass signdict.org CORS restrictions. See the "Container" section for deployment.
 
 ## Container
 
@@ -98,19 +77,19 @@ Every tag publishes a linux/amd64 image to ghcr:
 docker run -p 8080:8080 ghcr.io/dopri/gebaerden:latest
 ```
 
-It carries the same build provenance attestation as the APKs:
+Verify the image attestation:
 
 ```bash
 gh attestation verify oci://ghcr.io/dopri/gebaerden:latest --repo DoPri/gebaerden
 ```
 
-`docker-compose.yml` names that image, so a deployment is
+Deploy using `docker-compose.yml`:
 
 ```bash
 docker compose pull && docker compose up -d
 ```
 
-and building it here instead is
+Build locally:
 
 ```bash
 docker compose up -d --build
@@ -118,13 +97,10 @@ docker compose up -d --build
 
 ## Decisions
 
-`docs/adr/` records why the app works the way it does. Read it before touching
-the API layer, the scheduler, the reminders or the routes.
+`docs/adr/` documents architecture decisions.
 
 ## License
 
 Code: see `LICENSE`.
 
-The videos belong to SignDict under various CC licenses,
-some with an NC clause, so commercial use is ruled out. Rights holder and
-license are shown under every video.
+Videos belong to SignDict under various CC licenses. Rights holder and license appear below every video.

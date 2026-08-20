@@ -7,7 +7,6 @@ import '../db/repo.dart';
 import '../util/text.dart';
 import 'offline.dart';
 
-/// Shown while the request is in flight.
 Future<List<CachedEntry>> cachedMatches(
   AppDatabase db,
   String query, {
@@ -34,7 +33,6 @@ Future<List<CachedEntry>> cachedLetter(AppDatabase db, String letter) async {
   return rows;
 }
 
-/// Exact match first, then prefix, then alphabetical.
 List<CachedEntry> sortForDisplay(List<CachedEntry> rows, String query) {
   final q = query.trim().toLowerCase();
   int rank(CachedEntry e) {
@@ -52,7 +50,7 @@ List<CachedEntry> sortForDisplay(List<CachedEntry> rows, String query) {
   return sorted;
 }
 
-/// Substring search gives compounds for free: Haus finds Rathaus.
+/// Leverages substring matching to find compound words containing query.
 Future<List<CachedEntry>> relatedTo(
   AppDatabase db,
   CachedEntry entry, {

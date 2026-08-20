@@ -5,7 +5,7 @@ import '../db/repo.dart';
 
 const _hintKey = 'index:lastPage';
 
-/// Roughly six pages of scanner spam sit at the tail, so allow a generous walk.
+// Page window limit to bypass scanner spam at index tail.
 const _maxPages = 14;
 
 Future<int> _hint(AppDatabase db) async {
@@ -16,8 +16,7 @@ Future<int> _hint(AppDatabase db) async {
   return value is int ? value : indexPages;
 }
 
-/// Newest first. index() runs by id ascending and its tail is full of search
-/// scanner junk without video, so this walks back until enough real signs turn up.
+/// Walks backwards from index tail to skip video-less entries.
 Future<List<CachedEntry>> newestEntries(
   AppDatabase db, {
   int limit = 60,
@@ -42,8 +41,7 @@ Future<List<CachedEntry>> newestEntries(
   }
 
   final rows = await cacheEntries(db, [for (final b in batches) ...b]);
-  // index() runs by id ascending, so the highest id is the newest. Sorted
-  // here rather than reversed, the cache hands its rows back unordered.
+  // Sorts by ID descending to present newest entries first.
   final playable = rows.where((r) => r.hasVideo).toList()
     ..sort((a, b) => b.id.compareTo(a.id));
   return playable.take(limit).toList();

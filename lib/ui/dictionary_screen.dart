@@ -45,7 +45,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
   void initState() {
     super.initState();
     unawaited(_loadRecent());
-    // Opening a word happens on the detail screen, which pops back here.
+    // Detail screen updates recents on open.
     _watch = widget.db
         .tableUpdates(TableUpdateQuery.onTable(widget.db.recents))
         .listen((_) => unawaited(_loadRecent()));
@@ -105,7 +105,6 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
       return;
     }
 
-    // Cache first, the network only refines.
     unawaited(_showCached(_query));
     _timer = Timer(_debounce, () => unawaited(_search(_query)));
   }
@@ -127,8 +126,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
 
     try {
       final live = await liveSearch(widget.db, query, cancel: cancel);
-      // The server matches substrings only. Cached hits carry the typo
-      // tolerance, so they go after the live ones rather than being replaced.
+      // Server only matches substrings; append cached matches for typo tolerance.
       final cached = await cachedMatches(widget.db, query);
       if (!mounted || _query != query) return;
 

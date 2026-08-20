@@ -11,15 +11,11 @@ import '../settings.dart';
 import '../theme.dart';
 import 'widgets/pieces.dart';
 
-/// The widget a step points at.
 enum TourSpot { tabs, search, browse, video, counts, review, lists, offline }
 
-/// Where a step happens. The tour goes there before it shows.
 enum TourPlace { dictionary, entry, learn, lists, more }
 
-/// Marks the widget a step points at. A spot can exist more than once, two
-/// entry screens stacked on each other carry the same controls, so the one
-/// mounted last is the one the spotlight uses.
+// Spotlight uses latest-mounted context when multiple anchor instances exist.
 class TourAnchor extends StatefulWidget {
   const TourAnchor({required this.spot, required this.child, super.key});
 
@@ -50,10 +46,7 @@ class _TourAnchorState extends State<TourAnchor> {
     TourAnchor._live.putIfAbsent(widget.spot, () => []).add(context);
   }
 
-  /// Two anchors sit next to each other in the trainer, and a section that
-  /// arrives late shifts them by one. The element is then reused for the
-  /// other one, so the spot changes under a state that keeps living, and the
-  /// registration from initState pointed at the wrong widget.
+  // Update live registry when reused element changes spot.
   @override
   void didUpdateWidget(TourAnchor old) {
     super.didUpdateWidget(old);
@@ -170,9 +163,7 @@ const tourSteps = <TourStep>[
     ),
 ];
 
-/// The walkthrough over the running app. Sits above the router rather than in
-/// the tab shell, because the video step opens an entry screen and the
-/// spotlight has to stay on top of it.
+// Placed above router so spotlight persists across navigation to entry screen.
 class Tour extends StatefulWidget {
   const Tour({
     required this.db,
@@ -193,24 +184,19 @@ class _TourState extends State<Tour> {
   int? _step;
   Rect? _hole;
 
-  /// The overlay stays out until the anchor has been measured, otherwise the
-  /// card shows up centred and jumps into place a frame later.
+  // Delay overlay until anchor is measured to prevent visual jump.
   var _placed = false;
-
-  /// Where the tour was started, so it hands the app back the way it found it.
   var _back = '/';
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Mehr clears the marker to run the tour again, so this is the only place
-    // that decides whether it runs.
+    // Single entry point checking tour completion state.
     if (_step != null || SettingsScope.of(context).tourDone) return;
     _go(0);
   }
 
-  /// A post frame callback only fires if a frame is coming, and a step
-  /// without an anchor asks for none.
+  // ensureVisualUpdate guarantees post-frame callback fires without active animation.
   void _after(VoidCallback run) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) run();
@@ -224,8 +210,7 @@ class _TourState extends State<Tour> {
       _hole = null;
       _placed = false;
     });
-    // Navigating goes through the router, which must not be told to rebuild
-    // while this build is still running.
+    // Postpone router navigation outside current build phase.
     _after(() => unawaited(_enter(index)));
   }
 
@@ -244,7 +229,7 @@ class _TourState extends State<Tour> {
         widget.router.go('/mehr');
       case TourPlace.entry:
         final id = await _example();
-        // go replaces the stack, so the next step drops this screen again.
+        // Use push() so subsequent router.go() automatically cleans up entry screen.
         if (id != null && mounted && _step == index) {
           widget.router.push('/eintrag/$id');
         }
@@ -253,9 +238,7 @@ class _TourState extends State<Tour> {
     _after(() => _place(index));
   }
 
-  /// A word the video step can play. The cache holds the whole index after the
-  /// first start, and a random one over the wire is the fallback. Without
-  /// either the step keeps its text and shows no spotlight.
+  // Find any entry with a video to anchor spotlight.
   Future<int?> _example() async {
     final cached =
         await (widget.db.select(widget.db.entries)
@@ -279,15 +262,11 @@ class _TourState extends State<Tour> {
     if (target != null) {
       Scrollable.ensureVisible(target, alignment: 0.5);
     }
-    // The scroll only lands in the next layout pass, and the box has to be
-    // read after it.
+    // Wait for layout pass following ensureVisible before measuring rect.
     _after(() => _follow(index));
   }
 
-  /// The screen under the spotlight keeps loading while the step is up. The
-  /// scope chips of the trainer arrive late and push the counts down, so the
-  /// ring sat a section too high. Nothing tells an ancestor that a row below
-  /// it has moved, hence the rect is read again after every frame.
+  // Poll anchor rect each frame to track async layout shifts.
   void _follow(int index) {
     if (_step != index) return;
     final rect = TourAnchor.rectOf(tourSteps[index].spot);
@@ -297,8 +276,7 @@ class _TourState extends State<Tour> {
         _placed = true;
       });
     }
-    // No ensureVisualUpdate here. This rides along with the frames that happen
-    // anyway, asking for one of its own would never stop.
+    // Track existing frames only to avoid infinite render loop.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _follow(index);
     });
@@ -338,8 +316,7 @@ class _TourState extends State<Tour> {
       child: Material(
         type: MaterialType.transparency,
         child: GestureDetector(
-          // The tour walks the app itself. A tap through the hole would push a
-          // screen under the overlay.
+          // Block taps from bubbling into underlying UI.
           behavior: HitTestBehavior.opaque,
           onTap: () {},
           child: Stack(
@@ -425,8 +402,6 @@ class _TourState extends State<Tour> {
   }
 }
 
-/// Dims everything except the anchored widget. Without a [hole] the whole
-/// screen goes dark and the card sits in the middle of it.
 class Spotlight extends StatelessWidget {
   const Spotlight({required this.hole, super.key});
 
@@ -464,8 +439,7 @@ class _Scrim extends CustomPainter {
       Path.combine(PathOperation.difference, screen, Path()..addRRect(rect)),
       scrim,
     );
-    // The highlighted widget can sit on any surface, so it gets an outline of
-    // its own rather than relying on the darkness around it.
+    // Stroke boundary outline for contrast across varied backgrounds.
     canvas.drawRRect(
       rect,
       Paint()

@@ -19,8 +19,7 @@ final _random = Random();
 
 T pick<T>(List<T> items) => items[_random.nextInt(items.length)];
 
-/// Character to its dictionary entry. Resolving costs 52 queries, so the
-/// mapping is cached.
+/// Resolving characters costs 52 API queries, so mapping is cached in settings.
 Future<Map<String, CachedEntry>> loadCharset(
   AppDatabase db,
   Charset set,
@@ -32,8 +31,7 @@ Future<Map<String, CachedEntry>> loadCharset(
 
   var ids = <String, int>{};
   final storedIds = stored?.value;
-  // An imported backup can carry anything here, so only a clean map is
-  // trusted. Anything else is resolved again.
+  // Imported backups may be malformed; re-resolve if structure is invalid.
   if (storedIds is Map && storedIds.values.every((v) => v is int)) {
     ids = storedIds.map((k, v) => MapEntry('$k', v as int));
   } else {
@@ -57,7 +55,7 @@ Future<Map<String, CachedEntry>> loadCharset(
   return resolved;
 }
 
-/// Splits a word so multi-letter handshapes like sch win over their parts.
+/// Splits words prioritizing longer multi-letter handshapes (e.g. 'sch' before 's').
 List<String>? toChars(String word, Map<String, CachedEntry> set) {
   final lower = word.toLowerCase();
   final multi = set.keys.where((c) => c.length > 1).toList()
@@ -79,7 +77,7 @@ List<String>? toChars(String word, Map<String, CachedEntry> set) {
 
 final _spellable = RegExp(r'^[a-zäöüß]{3,6}$');
 
-/// Words the alphabet can actually spell, drawn from the local cache.
+/// Filters local cache for words spellable with available charset handshapes.
 Future<List<String>> spellableWords(
   AppDatabase db,
   Map<String, CachedEntry> set,

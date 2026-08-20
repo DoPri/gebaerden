@@ -45,7 +45,6 @@ void main() {
     await tester.pumpWidget(
       await harness(
         db,
-        // The entry screen scrolls, so the clip is never squeezed.
         ListView(
           children: [
             SignVideo(
@@ -80,13 +79,11 @@ void main() {
       id: 952,
       videoUrl: 'https://assets.wishlephant.com/signdict/videos/y.mp4',
     );
-    // Both clips are opening at once, the first one is already stale.
     player.hold = true;
     await open(tester);
     await open(tester, video: next);
     player.release();
-    // Cancelling the event subscription only finishes on the real clock and
-    // the player is not disposed before it does.
+    // Event subscription cancellation requires real async clock before disposal.
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 50)),
     );
@@ -124,7 +121,6 @@ void main() {
   });
 
   testWidgets('a broken clip leaves the poster up', (tester) async {
-    // A stored thumbnail, so no image has to come off the net here.
     final file = File('${tmp.path}/951.jpg')..writeAsBytesSync(onePixelPng);
     await db
         .into(db.assets)
@@ -178,8 +174,7 @@ void main() {
     await open(tester);
     expect(find.byType(VideoPlayer), findsOneWidget);
 
-    // Not every variant upstream carries a file. The old clip belongs to
-    // another word by then and must not stay up under the new label.
+    // Clears player when new variant lacks video URL.
     await open(tester, video: const ApiVideo(id: 42));
 
     expect(find.byType(VideoPlayer), findsNothing);
@@ -283,7 +278,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(FullscreenVideo), findsOneWidget);
-      // No second create, so the clip keeps its position.
+      // Reuses controller to preserve playback position.
       expect(player.opened, hasLength(1));
 
       await tester.tap(find.byTooltip('Vollbild verlassen'));

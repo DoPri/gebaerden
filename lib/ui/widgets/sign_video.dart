@@ -12,7 +12,7 @@ import 'pieces.dart';
 
 const _speeds = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5];
 
-/// One frame at 25 fps.
+// Frame duration at 25 fps.
 const _step = Duration(milliseconds: 40);
 
 class SignVideo extends StatefulWidget {
@@ -31,11 +31,7 @@ class SignVideo extends StatefulWidget {
   final ApiVideo video;
   final String label;
   final bool controls;
-
-  /// Overrides the stored preference while playing a sequence.
   final bool? loop;
-
-  /// Caps the height so question and answers share one screen.
   final bool compact;
   final VoidCallback? onEnded;
 
@@ -88,7 +84,7 @@ class _SignVideoState extends State<SignVideo> {
     try {
       await next.initialize();
     } on Object {
-      // A truncated file or an unreachable url must not take the screen down.
+      // Prevent corrupt files or unreachable URLs from crashing screen.
       await next.dispose();
       return _giveUp(wanted, old, poster);
     }
@@ -113,8 +109,7 @@ class _SignVideoState extends State<SignVideo> {
     await old?.dispose();
   }
 
-  /// Nothing playable. The old clip has to go, it belongs to another word by
-  /// now and the still takes its place.
+  // Dispose old player to avoid showing stale media across words.
   Future<void> _giveUp(
     int wanted,
     VideoPlayerController? old,
@@ -385,7 +380,7 @@ class _Credits extends StatelessWidget {
   }
 }
 
-/// Shares the controller with the small player, so it keeps its position.
+// Shares controller with inline player to preserve playback state.
 class FullscreenVideo extends StatelessWidget {
   const FullscreenVideo({
     required this.player,

@@ -68,7 +68,7 @@ class _MoreScreenState extends State<MoreScreen> {
         StatsPanel(db: widget.db),
         const SizedBox(height: 24),
 
-        // Without a queue the section would lead nowhere.
+        // Hide offline section when download queue is unavailable.
         if (downloadsAvailable) ...[
           const SectionLabel('Offline'),
           const SizedBox(height: 8),
@@ -154,7 +154,7 @@ class _MoreScreenState extends State<MoreScreen> {
         const SizedBox(height: 8),
         Align(
           alignment: Alignment.centerLeft,
-          // The tour itself watches the marker and starts over once it drops.
+          // Resetting tourDone triggers tour rerun.
           child: AppButton(
             label: 'Rundgang erneut ansehen',
             icon: Icons.explore_outlined,
@@ -361,7 +361,7 @@ class _LetterScreenState extends State<LetterScreen> {
       final live = await liveLetter(widget.db, widget.letter);
       if (mounted) setState(() => _entries = live);
     } on Exception {
-      // The cache is already on screen.
+      // Keep showing cached entries on fetch failure.
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -540,7 +540,7 @@ class _BackupState extends State<_Backup> {
           '${count(summary.reviews, 'Antwort', 'Antworten')} und '
           '${count(summary.lists, 'Liste', 'Listen')} importiert.';
 
-      // Progress points at entry ids, so the words have to come back too.
+      // Restore entry metadata referenced by imported progress IDs.
       try {
         final fetched = await restoreEntries(widget.db);
         if (fetched > 0) {

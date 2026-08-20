@@ -4,38 +4,16 @@ Status: accepted
 
 ## Context
 
-`flutter_local_notifications` stopped shipping its broadcast receivers in
-version 16. Without two manifest entries the alarm is registered, nothing
-fails, and the reminder never arrives. The daily reminder was reported as
-finished while it had not fired once.
-
-Android schedules repeats through `matchDateTimeComponents`, which knows
-`time` and `dayOfWeekAndTime` and nothing in between. There is no "Monday,
-Wednesday and Friday" alarm.
+`flutter_local_notifications` v16+ requires explicit broadcast receivers in the manifest to fire alarms. Android scheduling (`matchDateTimeComponents`) only supports daily or single-weekday repeats.
 
 ## Decision
 
-The manifest pins `ScheduledNotificationReceiver` and
-`ScheduledNotificationBootReceiver`, and `test/manifest_test.dart` holds both
-so a plugin upgrade cannot drop them silently.
+The manifest explicitly declares `ScheduledNotificationReceiver` and `ScheduledNotificationBootReceiver`, guarded by `test/manifest_test.dart`.
 
-Picked weekdays become one alarm each with `dayOfWeekAndTime`. All seven days
-collapse to a single alarm with `time`.
+Specific weekdays become individual `dayOfWeekAndTime` alarms. All-week reminders use a single `time` alarm. Reminder configuration is stored as `12345 08:00`.
 
-One line is stored per reminder, days and time separated by a space, for
-example `12345 08:00`.
-
-Reminders take the low notification ids and downloads sit above them. Neither
-side calls `cancelAll`, which would take the other one down.
-
-Alarms are inexact. An exact alarm needs a separate permission and a vocabulary
-reminder is not time critical.
+Reminders use low notification IDs; downloads use high IDs. Neither calls `cancelAll`. Alarms are inexact to avoid permission requirements.
 
 ## Consequences
 
-That an alarm is registered says nothing about whether the notification
-arrives. The manifest test is the only automated guard, the rest has to be seen
-on a device.
-
-The due count is baked into the text when scheduling, so it goes stale within a
-day. Opening the app rewrites it without prompting again.
+Manifest tests guard against silent registration failures. The baked-in due count goes stale daily, refreshing when the app opens.

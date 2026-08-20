@@ -9,13 +9,8 @@ import '../db/repo.dart';
 
 const backupSchema = 'signdict-trainer/v2';
 
-/// replace wipes the chosen sections first, merge keeps the better of the two.
-/// What is taken over is the section picker's business, not this one's.
 enum ImportMode { replace, merge }
 
-/// The parts a backup can be cut into, on the way out and on the way back.
-/// [settings] carries the picked video per entry too, that is a preference
-/// like any other.
 enum BackupSection { lists, progress, settings, reminders }
 
 const _sectionKeys = {
@@ -25,7 +20,6 @@ const _sectionKeys = {
   BackupSection.reminders: ['reminders'],
 };
 
-/// Which sections a file actually carries, so the import only offers those.
 Set<BackupSection> sectionsIn(String text) {
   final backup = _parse(text);
   return {
@@ -56,13 +50,12 @@ class ImportSummary {
   final int lists;
 }
 
-/// The default rounds timestamps to milliseconds, which loses the ordering.
+// Default serializer rounds timestamps to ms, losing order precision.
 final _exact = ValueSerializer.defaults(serializeDateTimeValuesAsString: true);
 
 const backupExtension = 'dgsbackup';
 
-/// Declared in `ios/Runner/Info.plist`. The iOS picker selects by type, and
-/// file_selector throws on a group that carries none.
+// iOS file picker requires declared UTI in Info.plist.
 const backupUti = 'gg.prinz.gebaerden.sicherung';
 
 String backupFileName(DateTime at) =>
@@ -89,7 +82,7 @@ Future<String> exportBackup(
     'schema': backupSchema,
     'exportedAt': DateTime.now().toIso8601String(),
     'cards': await rows(BackupSection.progress, db.select(db.cards).get),
-    // The id is device local, it would collide on the way in.
+    // Device-local autoincrement ID would collide on import.
     'reviews': await rows(
       BackupSection.progress,
       db.select(db.reviews).get,
@@ -184,8 +177,6 @@ Future<ImportSummary> importBackup(
   );
 
   await db.transaction(() async {
-    // Replace clears only what is coming back. A section left unticked keeps
-    // whatever is on the device.
     if (mode == ImportMode.replace) {
       if (want(BackupSection.progress)) {
         await db.delete(db.reviews).go();
@@ -245,7 +236,7 @@ Future<void> _mergeCards(
   final winners = incoming.where((card) {
     final here = local[card.id];
     if (here == null) return true;
-    // More reps wins. A tie goes to the later review.
+    // More reps wins; tie goes to later review.
     if (card.reps != here.reps) return card.reps > here.reps;
     final a = card.lastReview?.millisecondsSinceEpoch ?? 0;
     final b = here.lastReview?.millisecondsSinceEpoch ?? 0;
@@ -254,7 +245,6 @@ Future<void> _mergeCards(
   await db.batch((b) => b.insertAllOnConflictUpdate(db.cards, winners));
 }
 
-/// One card, one review per instant.
 String _reviewKey(StoredReview r) =>
     '${r.cardId}@${r.reviewedAt.microsecondsSinceEpoch}';
 
@@ -283,8 +273,7 @@ Future<void> _mergeReviews(
   );
 }
 
-/// The id is dropped on the way out, so nothing else tells two reminders
-/// apart. One list, one day set and one time is one reminder.
+// Composite key deduplicates reminders since IDs are omitted on export.
 String _reminderKey(StoredReminder r) =>
     '${r.listId}@${r.days}@${r.hour}:${r.minute}';
 
@@ -314,8 +303,6 @@ Future<void> _mergeReminders(
   );
 }
 
-/// Cards and lists only carry entry ids. On a fresh device nothing of that is
-/// visible until the words are back.
 Future<List<int>> missingEntryIds(AppDatabase db) async {
   final wanted = <int>{
     ...(await db.select(db.cards).get()).map((c) => c.entryId),
@@ -329,7 +316,7 @@ Future<List<int>> missingEntryIds(AppDatabase db) async {
   return wanted.where((id) => !have.contains(id)).toList();
 }
 
-/// One aliased entry() per id, so keep the query a sane size.
+// Limit GraphQL query size per request.
 const _chunk = 100;
 
 Future<int> restoreEntries(AppDatabase db) async {
