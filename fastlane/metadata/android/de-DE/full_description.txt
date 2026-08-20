@@ -1,27 +1,42 @@
-DGS Lernen ist eine schlichte, werbefreie und quelloffene App zum Lernen der Deutschen Gebärdensprache. Die Videos stammen aus dem offenen Wörterbuch SignDict.
+Gebärdensprache lernen mit Videos, Wörterbuch und Vokabeltrainer. DGS Lernen ist eine schlichte, werbefreie und quelloffene App für Deutsche Gebärdensprache (DGS), umgangssprachlich auch Zeichensprache genannt. Die Gebärdenvideos kommen aus dem offenen Wörterbuch SignDict.
 
-Dein Fortschritt bleibt auf dem Gerät und lässt sich als Datei sichern und auf ein anderes Gerät übertragen.
+Kein Konto, kein Abo, keine Werbung, keine Tracker. Dein Fortschritt bleibt auf dem Gerät und lässt sich als Datei sichern und auf ein anderes Gerät übertragen.
 
-<b>Wörterbuch</b>
-Suche über mehrere tausend Gebärden, Blättern nach Buchstabe, verwandte Wörter und eine Zufallsgebärde zum Stöbern.
+<b>Für wen die App gedacht ist</b>
+Anfänger, die zum ersten Mal Gebärdensprache lernen. Fang mit dem Fingeralphabet an, nimm eine Themenliste wie Begrüßung oder Familie und überlass die Einteilung dem Trainer.
+Eltern, Geschwister und Großeltern gehörloser Kinder, die einen Grundwortschatz für den Alltag brauchen.
+Kita, Schule und Schulbegleitung, wo einzelne Gebärden für eine Gruppe nachgeschlagen und vorbereitet werden.
+Pflege, Praxis, Rettungsdienst und Behörde, wo eine Handvoll Gebärden ein Gespräch überhaupt erst möglich macht.
+Teilnehmer eines DGS-Kurses an der Volkshochschule oder an der Uni, die zwischen den Terminen Vokabeln wiederholen.
+Gehörlose und schwerhörige Menschen und ihr Umfeld, die ein Wort oder eine regionale Variante nachschlagen.
+Alle, die aus Interesse Gebärden lernen, unterwegs im Zug oder ganz ohne Netz.
+
+<b>Wörterbuch der Deutschen Gebärdensprache</b>
+Suche in Tausenden Gebärden, Blättern im Alphabet, verwandte Gebärden und eine Zufallsgebärde zum Stöbern. Zu vielen Wörtern gibt es mehrere regionale Varianten. Du siehst alle und legst fest, welche der Trainer abfragt.
 
 <b>Videos in deinem Tempo</b>
-Zeitlupe bis 0,25-fach, Endlosschleife, Spiegeln für Linkshänder und Einzelbildschritte. Ohne Zeitlupe ist Nachmachen kaum möglich.
+Zeitlupe bis 0,25x, Endlosschleife, Spiegeln für Linkshänder und Bild für Bild-Steuerung. Rechteinhaber und Lizenz stehen unter jedem Video.
 
 <b>Vokabeltrainer</b>
-Verteilte Wiederholung nach FSRS, demselben Verfahren wie in Anki. Drei Abfragearten: Selbstbewertung, Auswahl aus vier Antworten oder Eintippen. Die Richtung wählst du frei zwischen Gebärde nach Wort, Wort nach Gebärde oder beidem.
+Spaced Repetition mit FSRS, dem gleichen Algorithmus, den auch Anki nutzt. Drei Abfragearten: Selbsteinschätzung, Multiple Choice oder freies Eintippen. Die Richtung wählst du frei: Gebärde nach Wort, Wort nach Gebärde oder beides gemischt. Dazu Tageslimits für neue Karten und Wiederholungen sowie eine Statistik über deinen aktuellen Streak, gelernte Karten und anstehende Wiederholungen.
 
 <b>Fingeralphabet und Zahlen</b>
-Alle Handformen von A bis Z samt Umlauten sowie die Zahlen 0 bis 20. Im Buchstabiermodus zeigt die App ein Wort Zeichen für Zeichen und du tippst, was du gelesen hast.
+Alle Handformen von A bis Z inklusive Umlauten sowie die Zahlen von 0 bis 20. Im Buchstabiermodus zeigt die App ein Wort Zeichen für Zeichen und du tippst, was du gelesen hast. Das Fingeralphabet lässt sich getrennt von den Gebärden üben.
 
 <b>Eigene Listen</b>
-Themenlisten zum Einstieg wie Begrüßung, Familie oder Farben. Dazu eigene Listen und die Liste "Kenne ich schon", deren Wörter aus dem Trainer verschwinden.
+Vorgefertigte Einstiegsthemen: Begrüßung, Familie, Farben, Essen und Trinken, Zeit, Wochentage, Gefühle und Unterwegs. Dazu eigene Listen und eine "Kenne ich schon"-Liste, deren Wörter aus dem Trainer verschwinden.
 
-<b>Listen teilen</b>
-Schick eine Liste als Datei an andere. Wer die App hat, tippt den Anhang an und übernimmt sie.
+<b>Erinnerungen</b>
+Individuelle Erinnerungen pro Liste, an frei gewählten Wochentagen zur gewünschten Uhrzeit.
 
-<b>Offline</b>
-Lade einzelne Wörter, ganze Buchstaben oder das komplette Wörterbuch herunter. Die Suche funktioniert danach auch ohne Netz.
+<b>Teilen</b>
+Schick deine Listen als Datei an andere. Wer die App hat, tippt den Anhang an und übernimmt sie.
+
+<b>Offline lernen</b>
+Lade einzelne Wörter, ganze Buchstaben oder das komplette Wörterbuch herunter. Suche, Videos und Trainer laufen danach offline weiter, sodass du auch im Zug, im Ausland oder im Flugmodus Gebärdensprache lernen kannst.
+
+<b>Aussehen</b>
+Heller und dunkler Modus und eine frei wählbare Akzentfarbe. Die App passt jede Farbe automatisch so an, dass der Text perfekt lesbar bleibt.
 
 <b>Quelloffen</b>
 Der gesamte Quelltext ist öffentlich und steht unter der GNU GPL 3.0. Jeder kann nachlesen, was die App tut, sie selbst bauen, einen Fehler melden oder etwas beitragen.

@@ -16,8 +16,9 @@ notes.
 ## What the fastlane folder is
 
 `fastlane/metadata/android/<locale>/` holds the store listing: title, both
-descriptions, the changelog per versionCode, the icon, the feature graphic and
-the screenshots. The layout comes from Fastlane and has become the common one.
+descriptions, the changelog per versionCode, the link to the preview video, the
+icon, the feature graphic and the screenshots. The layout comes from Fastlane
+and has become the common one.
 
 Two things read it. F-Droid picks it up straight out of this repository, no
 tooling involved. Fastlane's `supply` uploads the same tree to Play. One set of
@@ -28,7 +29,11 @@ texts, two stores.
 needed for the Play upload, nothing in the app or the tests touches it.
 
 The icon and the feature graphic are generated, `tools/icons.py` writes them.
-Do not edit them by hand.
+Do not edit them by hand. The same goes for the screenshots and the preview
+video, `tools/screenshots.py` and `tools/preview.py` write those.
+
+Between them the three scripts need `rsvg-convert`, `magick`, `ffmpeg`, `adb`
+and `fc-match` on the path.
 
 ## Screenshots
 
@@ -40,10 +45,10 @@ flutter emulators --launch Pixel_10
 python3 tools/screenshots.py
 ```
 
-The script captures and files in one go. It walks the app through four screens
-twice, once light and once dark, then numbers the eight frames 1 to 8 and
-copies them into both locales. Play takes at most eight per locale, so four
-screens in two themes is the ceiling.
+The script captures and files in one go. It walks the app through eight
+screens, one feature each, and files them as 1 to 8. Play takes at most eight
+per locale, so a second theme would spend half of them on a screen that is
+already there. The dark mode gets one frame, the offline screen.
 
 It picks the attached Android device itself and stops if there is none or more
 than one, in which case name it: `python3 tools/screenshots.py emulator-5554`.
@@ -55,11 +60,93 @@ screenshot needs the driver, and a plain `flutter test integration_test` would
 fail on it.
 
 It pulls real words off signdict.org, so the shots carry real footage.
+`test_driver/seed.dart` wipes the test database and walks the whole index into
+the entry cache before the first frame, so every frame counts the same words.
 
 A captured frame holds the Flutter surface alone. The system bars are missing
 and leave an empty strip top and bottom, so the target measures them and hands
 the heights over in the file name, which `tools/screenshots.py` then cuts off.
 `takeScreenshot` takes arguments only on the web, hence the file name.
+
+Each frame then goes on a 1080x1920 canvas under a headline and a line of
+explanation. The texts live in `CAPTIONS` in `tools/screenshots.py`, German for
+de-DE and English for en-US. The screens themselves stay German, that is the
+only language the app speaks. The canvas is also what keeps the frames inside
+Play's bounds, a raw phone frame is 1080x2219 and Play refuses a long side more
+than twice the short one.
+
+## Preview video
+
+Play takes a preview only as a YouTube link, so the last step is by hand:
+
+```bash
+python3 tools/preview.py
+```
+
+It films `test_driver/preview_test.dart` with `adb screenrecord` and writes
+`build/preview/preview.mp4`, one take and no text on it. The upload goes
+through
+
+```bash
+uv run tools/youtube.py --privacy public
+```
+
+which puts the link in `fastlane/metadata/android/<locale>/video.txt` for both
+locales. Without `--privacy` the video goes up unlisted, and Play takes only a
+public one.
+
+`supply` reads the video files if they are there and leaves the field alone if
+they are not, the same way it treats a missing changelog.
+
+### Once: the YouTube credentials
+
+In the Google Cloud console, signed in as the account that owns the channel.
+Any project will do, the one behind the Play service account included.
+
+First, APIs and services, Library, search for "YouTube Data API v3", Enable.
+
+Second, the consent screen, under APIs and services, OAuth consent screen, or
+Google Auth Platform in the newer console. Nobody but you ever sees it, because
+yours is the only account that will ever sign in, so the entries are free
+choices rather than a public profile:
+
+| Field                         | What goes in                                         |
+| ----------------------------- | ---------------------------------------------------- |
+| App name                      | `DGS Lernen release`, the name on the consent screen |
+| User support email            | your own address                                     |
+| Audience                      | External. Internal exists only under Workspace       |
+| Developer contact information | the same address again                               |
+
+The app domain and logo fields stay empty, they matter only for verification,
+which this never goes through. Two more entries follow:
+
+- Data access, Add or remove scopes, tick
+  `https://www.googleapis.com/auth/youtube.upload`. It sits under YouTube Data
+  API v3 and the filter box finds it by the word `upload`.
+- Audience, Test users, Add users, your own address. Publishing the app is not
+  needed. A client left in testing shows one warning screen at sign in, the
+  "Google hasn't verified this app" one, where Advanced and then the "go to"
+  link carry on.
+
+Third, APIs and services, Credentials, Create credentials, OAuth client ID.
+Application type "Desktop app", name it anything, `gebaerden-upload` does.
+Create, then Download JSON.
+
+Fourth, save that file as `youtube-client.json` in the project root
+and point `.env` at it:
+
+```bash
+export YOUTUBE_CLIENT_SECRET_FILE="$PWD/youtube-client.json"
+```
+
+The first upload opens the browser, and the token it caches in
+`.youtube-token.json` does it from then on. Whichever channel consents is the
+one the video lands on, so sign in as the channel owner.
+
+Same device rules as the screenshots. It is a second target because the
+screenshot run converts the Flutter surface to an image, which leaves
+screenrecord filming a black display. Why it runs in profile and how the take
+is trimmed is written where it happens, in that file and in `tools/preview.py`.
 
 ## Settings
 
@@ -117,9 +204,21 @@ deployment guide covers it and hands off to the fastlane steps:
 
 Short version: create a service account with a JSON key in the Google Cloud
 project behind the app, invite it in the Play Console under Users and
-permissions and give it release rights. Locally, point
-`PLAY_SERVICE_ACCOUNT_FILE` in `.env` at that JSON. For CI, store the whole
-JSON as the secret `PLAY_SERVICE_ACCOUNT`.
+permissions and give it release rights. For CI, store the whole JSON as the
+secret `PLAY_SERVICE_ACCOUNT`.
+
+Locally there is a second way that needs no key on disk. `gcloud` comes with
+the toolchain, `mise install` puts it there:
+
+```bash
+gcloud auth application-default login --scopes=openid,email,\
+https://www.googleapis.com/auth/cloud-platform,\
+https://www.googleapis.com/auth/androidpublisher
+```
+
+`cloud-platform` is in there because gcloud turns the login down without it.
+`supply` picks the result up on its own. With `PLAY_SERVICE_ACCOUNT_FILE` set
+in `.env` the key wins, without it gcloud does.
 
 Check it before relying on it:
 
@@ -201,7 +300,8 @@ can be retried by hand without building again.
 
 ## Changing only the listing
 
-Texts, screenshots or the feature graphic without a new build:
+Texts, the video link, screenshots or the feature graphic without a new
+build:
 
 ```bash
 bundle exec fastlane android listing
@@ -213,7 +313,7 @@ and offers no way around it, so on a fresh app the first push has to be the
 its own.
 
 Only what differs goes up, on this lane and on the release. Every image is
-compared by checksum against the one Play holds, and the three texts are
+compared by checksum against the one Play holds, and the four texts are
 compared against the live listing before anything is sent, so a run that
 changes nothing uploads nothing.
 
@@ -265,6 +365,8 @@ without it and only loses the dependency advisories in the console.
 | `ANDROID_KEY_PASSWORD`      | yes                   | yes                       |
 | `PLAY_SERVICE_ACCOUNT_FILE` | path to the JSON      | not needed                |
 | `PLAY_SERVICE_ACCOUNT`      | not needed            | the whole JSON            |
+| `YOUTUBE_CLIENT_SECRET_FILE` | path to the JSON     | not needed                |
 
 The Fastfile takes the file when `PLAY_SERVICE_ACCOUNT_FILE` is set and the
-raw JSON otherwise, so the same lane runs in both places.
+raw JSON otherwise, so the same lane runs in both places. The two YouTube
+values are local only, the video goes up by hand and CI never touches it.

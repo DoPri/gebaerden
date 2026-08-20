@@ -347,3 +347,7 @@ fabric.properties
 web/drift_worker.js
 web/fonts/
 web/sqlite3.wasm
+
+# The OAuth client tools/youtube.py signs in with and the token it caches.
+youtube-client.json
+.youtube-token.json

@@ -11,7 +11,7 @@ METADATA = File.join(ROOT, "fastlane/metadata/android")
 
 TRACK = "alpha" # aka. "closed testing"
 
-TEXTS = %w[title short_description full_description].freeze
+TEXTS = %w[title short_description full_description video].freeze
 
 opt_out_usage
 
@@ -20,15 +20,14 @@ opt_out_usage
 # only once the variable is actually set.
 #
 # Locally the path comes out of .env, in CI the whole JSON arrives as a secret.
+# Nil is a third answer and not an error: supply then falls back to whatever
+# `gcloud auth application-default login` left behind.
 def service_account
   path = ENV["PLAY_SERVICE_ACCOUNT_FILE"]
   return File.read(path) if path && !path.empty?
 
-  ENV["PLAY_SERVICE_ACCOUNT"] ||
-    UI.user_error!(
-      "Neither PLAY_SERVICE_ACCOUNT_FILE nor PLAY_SERVICE_ACCOUNT is set, " \
-      "see RELEASING.md",
-    )
+  raw = ENV["PLAY_SERVICE_ACCOUNT"]
+  raw && !raw.empty? ? raw : nil
 end
 
 def version_code
@@ -121,7 +120,9 @@ platform :android do
 
   desc "Resolve the credentials and the listing without uploading anything"
   lane :check do
-    validate_play_store_json_key(json_key_data: service_account)
+    key = service_account
+    # Nothing to validate when the credentials come from gcloud.
+    validate_play_store_json_key(json_key_data: key) if key
 
     code = version_code
     changed = listing_changed?

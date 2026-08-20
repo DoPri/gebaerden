@@ -1,30 +1,47 @@
-DGS Lernen is a plain, ad-free and open source app for learning German Sign Language (DGS). The videos come from the open dictionary SignDict.
+Learn German Sign Language with videos, a dictionary, and a vocabulary trainer. DGS Lernen is a minimalist, ad-free, and open source app for German Sign Language (Deutsche Gebärdensprache, DGS). The sign videos are sourced from the open dictionary SignDict.
 
-Your progress stays on the device and can be exported to a file and moved to another device.
+No account, no subscription, no ads, no trackers. Your progress stays on your device, and can be exported to a file and moved to another device at any time.
 
-<b>Dictionary</b>
-Search several thousand signs, browse by letter, follow related words and pull up a random sign.
+<b>Who this app is for</b>
+Beginners learning sign language for the first time. Start with fingerspelling, pick a topic list such as greetings or family, and leave the scheduling to the trainer.
+Parents, siblings, and grandparents of deaf children who need a working vocabulary for everyday life.
+Day care, schools, and teaching assistants looking up and preparing individual signs for their groups.
+Healthcare, emergency services, public offices, and customer service staff, where knowing a handful of signs makes a conversation possible.
+Students taking a DGS course at an adult education center or university who want to review vocabulary between classes.
+Deaf, hard of hearing, and late-deafened people and the people around them, looking up a word or a regional variant.
+Anyone learning signs out of interest, on the train, or with no internet connection at all.
+
+<b>German Sign Language dictionary</b>
+Search thousands of signs, browse alphabetically, explore related words, or pull up a random sign. Many words have regional variants. You can view all of them and choose which ones you want to learn.
 
 <b>Videos at your pace</b>
-Slow motion down to 0.25x, looping, mirroring for left-handed signers and frame stepping. Copying a sign is hard without slow motion.
+Slow motion down to 0.25x, continuous looping, mirroring for left-handed signers, and frame-by-frame control. Rights holder and license information are shown under every video.
 
 <b>Vocabulary trainer</b>
-Spaced repetition using FSRS, the same algorithm Anki uses. Three question types: self rating, four-way multiple choice or typing. You choose the direction: sign to word, word to sign, or both.
+Spaced repetition using FSRS—the same algorithm Anki uses. Three question types: self-rating, multiple choice, or free typing. You choose the direction: sign to word, word to sign, or a mix of both. Set daily limits for new cards and reviews, and track your progress with statistics on your current streak, cards learned, and upcoming reviews.
 
 <b>Fingerspelling and numbers</b>
-Every handshape from A to Z including umlauts, plus the numbers 0 to 20. In spelling mode the app spells a word character by character and you type what you read.
+Every handshape from A to Z including umlauts, plus the numbers 0 to 20. In spelling mode, the app spells a word character by character, and you type what you read. Fingerspelling can be practiced independently from the main vocabulary.
 
 <b>Your own lists</b>
-Starter topics such as greetings, family or colors, plus your own lists and an "already know" list whose words drop out of the trainer.
+Starter topics: greetings, family, colors, food and drink, time, weekdays, feelings, and getting around. Create your own custom lists, or use the "already know" list to remove mastered words from the trainer.
 
-<b>Share lists</b>
-Send a list as a file. Anyone with the app taps the attachment and takes it over.
+<b>Reminders</b>
+Set a custom reminder for each list on the weekdays and at the exact time you pick.
 
-<b>Offline</b>
-Download single words, whole letters or the entire dictionary. Search keeps working without a connection.
+<b>Sharing</b>
+Send your lists as a file. Anyone with the app can tap the attachment to import it directly. Single signs can be shared as web links.
+
+<b>Learning offline</b>
+Download specific words, individual letters, or the entire dictionary. Search, videos, and the vocabulary trainer work completely offline, so you can learn sign language on the train, abroad, or in airplane mode.
+
+<b>Appearance</b>
+Supports light and dark mode, and a custom accent color of your choice. The app automatically adjusts contrast so text always stays readable.
 
 <b>Open source</b>
-The whole source code is public, under the GNU GPL 3.0. Anyone can read what the app does, build it themselves, report a bug or contribute a change.
+The entire source code is public under the GNU GPL 3.0. Anyone can inspect how the app works, build it themselves, report a bug, or contribute.
 https://github.com/DoPri/gebaerden
+
+This app teaches only German Sign Language. It is not meant for American Sign Language (ASL).
 
 The sign videos are not part of this app. They come from SignDict under various Creative Commons licenses. Rights holder and license are shown under every video. This app is not affiliated with SignDict.
