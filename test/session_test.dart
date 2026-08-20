@@ -257,7 +257,7 @@ void main() {
       await tester.pumpWidget(await harness(db, StatsPanel(db: db)));
       await tester.pumpAndSettle();
 
-      expect(find.text('TAGE IN FOLGE'), findsOneWidget);
+      expect(find.text('AKTUELLER STREAK'), findsOneWidget);
       expect(find.text('GELERNT'), findsOneWidget);
       expect(find.text('LETZTE 14 TAGE'), findsOneWidget);
       expect(find.text('KOMMENDE 7 TAGE'), findsOneWidget);

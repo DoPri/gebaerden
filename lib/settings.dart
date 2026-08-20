@@ -23,6 +23,7 @@ final _defaults = Map<String, Object?>.unmodifiable({
   'newPerDay': 20,
   'reviewPerDay': 200,
   'showWithoutVideo': false,
+  'tourDone': false,
 });
 
 /// One table, so a new key needs no migration.
@@ -79,6 +80,7 @@ class AppSettings extends ChangeNotifier {
   int get newPerDay => _whole('newPerDay');
   int get reviewPerDay => _whole('reviewPerDay');
   bool get showWithoutVideo => _read<bool>('showWithoutVideo');
+  bool get tourDone => _read<bool>('tourDone');
 
   /// An imported file passes the type check with any string, so fall back
   /// rather than throw on a name no enum carries.

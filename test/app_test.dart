@@ -40,6 +40,7 @@ void main() {
     channels = FakeChannels()..install();
     tmp = Directory.systemTemp.createTempSync('app_test');
     downloads = Downloads(db);
+    await tourSeen(db);
     settings = AppSettings(db);
     await settings.load();
     await initNotifications();

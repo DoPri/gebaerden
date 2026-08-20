@@ -16,6 +16,7 @@ import '../theme.dart';
 import '../transfer/backup.dart';
 import '../util/text.dart';
 import 'offline_screen.dart';
+import 'tour.dart';
 import 'widgets/entry_list.dart';
 import 'widgets/pieces.dart';
 import 'widgets/section_dialog.dart';
@@ -71,7 +72,10 @@ class _MoreScreenState extends State<MoreScreen> {
         if (downloadsAvailable) ...[
           const SectionLabel('Offline'),
           const SizedBox(height: 8),
-          _OfflineLink(db: widget.db),
+          TourAnchor(
+            spot: TourSpot.offline,
+            child: _OfflineLink(db: widget.db),
+          ),
           const SizedBox(height: 24),
         ],
 
@@ -142,6 +146,19 @@ class _MoreScreenState extends State<MoreScreen> {
                 );
               }
             },
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        const SectionLabel('Rundgang'),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          // The tour itself watches the marker and starts over once it drops.
+          child: AppButton(
+            label: 'Rundgang erneut ansehen',
+            icon: Icons.explore_outlined,
+            onPressed: () => settings.set('tourDone', false),
           ),
         ),
         const SizedBox(height: 24),

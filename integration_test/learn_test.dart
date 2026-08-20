@@ -61,6 +61,13 @@ void main() {
         .insertOnConflictUpdate(
           const StoredSetting(key: 'index:synced', value: true),
         );
+    // The tour is a first start only. It would cover the shell these cases
+    // drive.
+    await db
+        .into(db.settings)
+        .insertOnConflictUpdate(
+          const StoredSetting(key: 'tourDone', value: true),
+        );
     await ensureSystemLists(db);
 
     settings = AppSettings(db);

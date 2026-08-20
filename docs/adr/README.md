@@ -19,3 +19,4 @@ tell whether the reason still holds.
 - [0013 Offline downloads are native only](0013-downloads-are-native.md)
 - [0014 The web build ships what it loads](0014-web-assets-are-vendored.md)
 - [0015 The container serves the app and the API on one origin](0015-container-one-origin.md)
+- [0016 The tour sits above the router](0016-tour-above-the-router.md)

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../platform/network.dart';
 import '../theme.dart';
+import 'tour.dart';
 import 'widgets/pieces.dart';
 
 const tabs = [
@@ -51,7 +52,10 @@ class Shell extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: _Tabs(index: index, onSelect: onSelect),
+      bottomNavigationBar: TourAnchor(
+        spot: TourSpot.tabs,
+        child: _Tabs(index: index, onSelect: onSelect),
+      ),
     );
   }
 }

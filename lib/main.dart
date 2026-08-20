@@ -16,6 +16,7 @@ import 'settings.dart';
 import 'theme.dart';
 import 'ui/lists_screen.dart';
 import 'ui/router.dart';
+import 'ui/tour.dart';
 
 const appLocale = Locale('de');
 const appLocales = [appLocale];
@@ -161,9 +162,11 @@ class _GebaerdenAppState extends State<GebaerdenApp>
             // would tell the system bars which way to draw their icons. Sits
             // inside the app, where the resolved brightness is known and
             // themeMode system is already accounted for.
+            // The tour sits above the router, so its spotlight stays on top
+            // of a pushed screen as well.
             builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
               value: systemOverlay(Theme.of(context).brightness),
-              child: child!,
+              child: Tour(db: widget.db, router: _router, child: child!),
             ),
             routerConfig: _router,
           ),

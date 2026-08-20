@@ -13,6 +13,7 @@ import '../settings.dart';
 import '../srs/scheduler.dart';
 import '../theme.dart';
 import 'cards.dart';
+import 'tour.dart';
 import 'widgets/pieces.dart';
 
 const _modes = [
@@ -30,16 +31,16 @@ const _directions = [
 const _directionHints = {
   DirectionMode.recognition: 'Du siehst die Gebärde und nennst das Wort.',
   DirectionMode.production:
-      'Du liest das Wort und gebärdest es selbst. Hier bewertest du immer selbst.',
+      'Du liest das Wort und gebärdest es. Hier schätzt du dich immer selbst ein.',
   DirectionMode.both: 'Jedes Wort wird in beide Richtungen abgefragt.',
 };
 
 const _modeHints = {
   ReviewMode.self:
-      'Du siehst die Auflösung und bewertest selbst, wie gut du es wusstest.',
+      'Du siehst die Auflösung und schätzt selbst ein, wie gut du sie wusstest.',
   ReviewMode.choice:
-      'Vier Antworten stehen zur Wahl. Bei Wort → Gebärde bewertest du weiter selbst.',
-  ReviewMode.typing: 'Tippe das Wort ein.',
+      'Multiple Choice mit vier Antworten. Bei Wort → Gebärde nutzt du weiter Selbsteinschätzung.',
+  ReviewMode.typing: 'Tippe das Wort frei ein.',
 };
 
 class LearnScreen extends StatefulWidget {
@@ -330,21 +331,27 @@ class _LearnScreenState extends State<LearnScreen> {
           ),
           const SizedBox(height: 22),
         ],
-        Row(
-          children: [
-            _Count(label: 'Fällig', value: _due),
-            const SizedBox(width: 28),
-            _Count(label: 'Neu', value: _fresh),
-          ],
+        TourAnchor(
+          spot: TourSpot.counts,
+          child: Row(
+            children: [
+              _Count(label: 'Fällig', value: _due),
+              const SizedBox(width: 28),
+              _Count(label: 'Neu', value: _fresh),
+            ],
+          ),
         ),
         const SizedBox(height: 22),
         const SectionLabel('Abfrage'),
         const SizedBox(height: 8),
-        ChoiceRow(
-          label: 'Abfrageart',
-          options: _modes,
-          value: settings.mode,
-          onChanged: (mode) => settings.set('mode', mode.name),
+        TourAnchor(
+          spot: TourSpot.review,
+          child: ChoiceRow(
+            label: 'Abfrageart',
+            options: _modes,
+            value: settings.mode,
+            onChanged: (mode) => settings.set('mode', mode.name),
+          ),
         ),
         const SizedBox(height: 6),
         Text(

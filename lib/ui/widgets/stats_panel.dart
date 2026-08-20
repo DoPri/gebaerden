@@ -37,7 +37,11 @@ class _StatsPanelState extends State<StatsPanel> {
       children: [
         Row(
           children: [
-            _Figure(label: 'Tage in Folge', value: '${stats.streak}', unit: ''),
+            _Figure(
+              label: 'Aktueller Streak',
+              value: '${stats.streak}',
+              unit: '',
+            ),
             const SizedBox(width: 32),
             _Figure(
               label: 'Gelernt',

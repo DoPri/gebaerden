@@ -45,6 +45,12 @@ Future<Widget> harness(
   );
 }
 
+/// The tour runs on a first start and lies over the whole app. Only the tour
+/// cases want to see it, everything that boots the app widget marks it seen.
+Future<void> tourSeen(AppDatabase db) => db
+    .into(db.settings)
+    .insertOnConflictUpdate(const StoredSetting(key: 'tourDone', value: true));
+
 /// Answers every GraphQL query with the given data, so no test touches the net.
 void stubApi(Map<String, dynamic> data) {
   useClient(

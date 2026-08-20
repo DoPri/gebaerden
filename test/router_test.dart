@@ -214,6 +214,7 @@ void main() {
 
   group('the app widget', () {
     testWidgets('builds with the stored theme', (tester) async {
+      await tourSeen(db);
       final settings = AppSettings(db);
       await settings.load();
       await settings.setThemeMode(ThemeMode.dark);
@@ -231,6 +232,7 @@ void main() {
     });
 
     testWidgets('a theme change reaches the tree', (tester) async {
+      await tourSeen(db);
       final settings = AppSettings(db);
       await settings.load();
       final network = NetworkStatus();

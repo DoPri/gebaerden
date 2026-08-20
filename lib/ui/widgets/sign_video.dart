@@ -7,6 +7,7 @@ import '../../media/media.dart';
 import '../../platform/local.dart';
 import '../../settings.dart';
 import '../../theme.dart';
+import '../tour.dart';
 import 'pieces.dart';
 
 const _speeds = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5];
@@ -155,42 +156,45 @@ class _SignVideoState extends State<SignVideo> {
     final player = _player;
     final license = parseLicense(widget.video.license);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: widget.compact
-                ? MediaQuery.sizeOf(context).height * 0.38
-                : double.infinity,
-          ),
-          child: Semantics(
-            label: 'Gebärde für ${widget.label}',
-            child: AspectRatio(
-              aspectRatio: player?.value.aspectRatio ?? 16 / 9,
-              child: ColoredBox(
-                color: Colors.black,
-                child: player == null || !player.value.isInitialized
-                    ? _Poster(_poster)
-                    : Transform.flip(
-                        flipX: settings.mirror,
-                        child: VideoPlayer(player),
-                      ),
+    return TourAnchor(
+      spot: TourSpot.video,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: widget.compact
+                  ? MediaQuery.sizeOf(context).height * 0.38
+                  : double.infinity,
+            ),
+            child: Semantics(
+              label: 'Gebärde für ${widget.label}',
+              child: AspectRatio(
+                aspectRatio: player?.value.aspectRatio ?? 16 / 9,
+                child: ColoredBox(
+                  color: Colors.black,
+                  child: player == null || !player.value.isInitialized
+                      ? _Poster(_poster)
+                      : Transform.flip(
+                          flipX: settings.mirror,
+                          child: VideoPlayer(player),
+                        ),
+                ),
               ),
             ),
           ),
-        ),
-        if (widget.controls)
-          if (player == null)
-            const _Controls(player: null, onStep: null)
-          else
-            ValueListenableBuilder(
-              valueListenable: player,
-              builder: (context, _, _) =>
-                  _Controls(player: player, onStep: _seekBy),
-            ),
-        _Credits(video: widget.video, license: license),
-      ],
+          if (widget.controls)
+            if (player == null)
+              const _Controls(player: null, onStep: null)
+            else
+              ValueListenableBuilder(
+                valueListenable: player,
+                builder: (context, _, _) =>
+                    _Controls(player: player, onStep: _seekBy),
+              ),
+          _Credits(video: widget.video, license: license),
+        ],
+      ),
     );
   }
 }

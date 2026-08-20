@@ -13,6 +13,7 @@ import '../search/dictionary.dart';
 import '../search/latest.dart';
 import '../settings.dart';
 import '../theme.dart';
+import 'tour.dart';
 import 'widgets/entry_list.dart';
 import 'widgets/pieces.dart';
 
@@ -218,25 +219,28 @@ class _SearchField extends StatelessWidget {
     final c = context.colors;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        textInputAction: TextInputAction.search,
-        autocorrect: false,
-        style: const TextStyle(fontSize: 16),
-        decoration: InputDecoration(
-          hintText: 'Nach einer Gebärde suchen',
-          prefixIcon: Icon(Icons.search, size: 18, color: c.fgMuted),
-          suffixIcon: controller.text.isEmpty
-              ? null
-              : IconButton(
-                  icon: Icon(Icons.close, size: 17, color: c.fgMuted),
-                  tooltip: 'Eingabe löschen',
-                  onPressed: () {
-                    controller.clear();
-                    onChanged('');
-                  },
-                ),
+      child: TourAnchor(
+        spot: TourSpot.search,
+        child: TextField(
+          controller: controller,
+          onChanged: onChanged,
+          textInputAction: TextInputAction.search,
+          autocorrect: false,
+          style: const TextStyle(fontSize: 16),
+          decoration: InputDecoration(
+            hintText: 'Nach einer Gebärde suchen',
+            prefixIcon: Icon(Icons.search, size: 18, color: c.fgMuted),
+            suffixIcon: controller.text.isEmpty
+                ? null
+                : IconButton(
+                    icon: Icon(Icons.close, size: 17, color: c.fgMuted),
+                    tooltip: 'Eingabe löschen',
+                    onPressed: () {
+                      controller.clear();
+                      onChanged('');
+                    },
+                  ),
+          ),
         ),
       ),
     );
@@ -266,24 +270,27 @@ class _Start extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: AppButton(
-                label: rolling ? 'Sucht…' : 'Zufällig',
-                icon: Icons.shuffle,
-                onPressed: rolling ? null : onRoll,
+        TourAnchor(
+          spot: TourSpot.browse,
+          child: Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  label: rolling ? 'Sucht…' : 'Zufällig',
+                  icon: Icons.shuffle,
+                  onPressed: rolling ? null : onRoll,
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: AppButton(
-                label: 'Neu',
-                icon: Icons.auto_awesome_outlined,
-                onPressed: () => context.push('/neu'),
+              const SizedBox(width: 8),
+              Expanded(
+                child: AppButton(
+                  label: 'Neu',
+                  icon: Icons.auto_awesome_outlined,
+                  onPressed: () => context.push('/neu'),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 24),
 

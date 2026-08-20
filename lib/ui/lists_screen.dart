@@ -14,6 +14,7 @@ import '../platform/local.dart';
 import '../theme.dart';
 import '../topics.dart';
 import '../transfer/list_file.dart';
+import 'tour.dart';
 import 'widgets/entry_list.dart';
 import 'widgets/pieces.dart';
 import 'widgets/reminder_panel.dart';
@@ -113,24 +114,27 @@ class _ListsScreenState extends State<ListsScreen> {
 
     return ListView(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
-          child: Row(
-            children: [
-              const Expanded(child: SectionLabel('Deine Listen')),
-              IconButton(
-                icon: const Icon(Icons.file_open_outlined, size: 19),
-                color: c.fgMuted,
-                tooltip: 'Geteilte Liste öffnen',
-                onPressed: _openFile,
-              ),
-              IconButton(
-                icon: const Icon(Icons.add, size: 21),
-                color: c.accent,
-                tooltip: 'Neue Liste',
-                onPressed: () => setState(() => _adding = !_adding),
-              ),
-            ],
+        TourAnchor(
+          spot: TourSpot.lists,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+            child: Row(
+              children: [
+                const Expanded(child: SectionLabel('Deine Listen')),
+                IconButton(
+                  icon: const Icon(Icons.file_open_outlined, size: 19),
+                  color: c.fgMuted,
+                  tooltip: 'Geteilte Liste öffnen',
+                  onPressed: _openFile,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add, size: 21),
+                  color: c.accent,
+                  tooltip: 'Neue Liste',
+                  onPressed: () => setState(() => _adding = !_adding),
+                ),
+              ],
+            ),
           ),
         ),
         if (_adding)

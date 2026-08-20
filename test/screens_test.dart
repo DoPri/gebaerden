@@ -271,7 +271,7 @@ void main() {
       await tester.tap(find.text('Tippen'));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Tippe das Wort ein'), findsOneWidget);
+      expect(find.textContaining('Tippe das Wort frei ein'), findsOneWidget);
     });
 
     testWidgets('both directions doubles the count', (tester) async {
@@ -411,7 +411,7 @@ void main() {
       await tester.pumpWidget(await harness(db, StatsPanel(db: db)));
       await tester.pumpAndSettle();
 
-      expect(find.text('Tage in Folge'.toUpperCase()), findsNothing);
+      expect(find.text('Aktueller Streak'.toUpperCase()), findsNothing);
     });
   });
 }
