@@ -29,6 +29,8 @@ const appDelegates = <LocalizationsDelegate<Object?>>[
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
+
   db = AppDatabase();
 
   // Must initialize notifications before download manager to prevent crash.
