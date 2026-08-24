@@ -62,7 +62,7 @@ RUN find build/web -type f \
 		-o -name '*.wasm' -o -name '*.svg' \) \
 		-size +1k -exec gzip -9 -k -f {} +
 
-FROM nginxinc/nginx-unprivileged:1.31.3-alpine@sha256:334d92979f15aaecd5dd50af5105e1230e2bb70765d45b1e2f964e7c5eda81c3 AS runtime
+FROM nginxinc/nginx-unprivileged:1.31.4-alpine@sha256:c3fed6436b61d2bf2201ec032c35c000871f7ed062dea5d586bc6bf4d0fdd140 AS runtime
 
 LABEL org.opencontainers.image.title="DGS Lernen" \
 	  org.opencontainers.image.description="Deutsche Gebärdensprache lernen mit Videos von SignDict." \
