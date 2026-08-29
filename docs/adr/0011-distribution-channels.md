@@ -23,8 +23,8 @@ The versionCode has to rise on every release, because Play refuses one it has
 already seen. F-Droid builds the same tag, so the code cannot be derived from
 a CI run number.
 
-Ruby enters the repository for `supply` and nothing else. It is not needed to
-build, run or test the app.
+Fastlane and Ruby enter the repository for `supply` and nothing else. They come
+from mise like every other tool. Neither is needed to build, run or test the app.
 
 A Play release can be halted but not withdrawn. That is why a tag stops at
 internal testing rather than going out to everyone.
