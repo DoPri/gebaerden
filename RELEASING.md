@@ -25,8 +25,9 @@ tooling involved. Fastlane's `supply` uploads the same tree to Play. One set of
 texts, two stores.
 
 `fastlane/Fastfile` holds the lanes and reads the service account out of
-`.env`, `fastlane/Appfile` holds the package name. Ruby is only
-needed for the Play upload, nothing in the app or the tests touches it.
+`.env`, `fastlane/Appfile` holds the package name. Fastlane and the Ruby it
+runs on come from mise, pinned in `mise.lock` like every other tool. Both
+are only needed for the Play upload.
 
 The icon and the feature graphic are generated, `tools/icons.py` writes them.
 Do not edit them by hand. The same goes for the screenshots and the preview
@@ -181,6 +182,7 @@ Google Play manages the final app signing key and re-signs bundles, resulting in
 ## Once: Google Play
 
 The first release requires manual upload via the Google Play Console to establish Play App Signing and the closed testing track. Subsequent uploads are automated via a service account, as detailed in:
+
 - <https://docs.flutter.dev/deployment/cd>
 - <https://docs.fastlane.tools/getting-started/android/setup/>
 
@@ -200,7 +202,7 @@ https://www.googleapis.com/auth/androidpublisher
 Verify credentials and pending release metadata:
 
 ```bash
-bundle exec fastlane android check
+fastlane android check
 ```
 
 ## Raising the version
@@ -249,7 +251,7 @@ Pre-releases skip Play store but are attached to the GitHub release. Obtainium t
 To update store metadata, screenshots, or the video link without a new build:
 
 ```bash
-bundle exec fastlane android listing
+fastlane android listing
 ```
 
 Only differing files and texts are uploaded. F-Droid applies the same metadata on its next build.
@@ -280,17 +282,17 @@ fdroid build gg.prinz.gebaerden:1
 
 ## Settings in one place
 
-| Name                        | Locally in `.env`     | In CI as a secret         |
-| --------------------------- | --------------------- | ------------------------- |
-| `ANDROID_HOME`              | path to the SDK       | the runner brings its own |
-| `ANDROID_KEYSTORE`          | path to `release.jks` | written from the base64   |
-| `ANDROID_KEYSTORE_BASE64`   | not needed            | base64 of `release.jks`   |
-| `ANDROID_KEYSTORE_PASSWORD` | yes                   | yes                       |
-| `ANDROID_KEY_ALIAS`         | yes                   | yes                       |
-| `ANDROID_KEY_PASSWORD`      | yes                   | yes                       |
-| `PLAY_SERVICE_ACCOUNT_FILE` | path to the JSON      | not needed                |
-| `PLAY_SERVICE_ACCOUNT`      | not needed            | the whole JSON            |
-| `YOUTUBE_CLIENT_SECRET_FILE` | path to the JSON     | not needed                |
+| Name                         | Locally in `.env`     | In CI as a secret         |
+| ---------------------------- | --------------------- | ------------------------- |
+| `ANDROID_HOME`               | path to the SDK       | the runner brings its own |
+| `ANDROID_KEYSTORE`           | path to `release.jks` | written from the base64   |
+| `ANDROID_KEYSTORE_BASE64`    | not needed            | base64 of `release.jks`   |
+| `ANDROID_KEYSTORE_PASSWORD`  | yes                   | yes                       |
+| `ANDROID_KEY_ALIAS`          | yes                   | yes                       |
+| `ANDROID_KEY_PASSWORD`       | yes                   | yes                       |
+| `PLAY_SERVICE_ACCOUNT_FILE`  | path to the JSON      | not needed                |
+| `PLAY_SERVICE_ACCOUNT`       | not needed            | the whole JSON            |
+| `YOUTUBE_CLIENT_SECRET_FILE` | path to the JSON      | not needed                |
 
 The Fastfile takes the file when `PLAY_SERVICE_ACCOUNT_FILE` is set and the
 raw JSON otherwise, so the same lane runs in both places. The two YouTube
