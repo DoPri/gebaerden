@@ -4,10 +4,13 @@ App for learning German Sign Language, built on the [SignDict](https://signdict.
 
 ## Install
 
-[<img src="https://github.com/NeoApplications/Neo-Backup/blob/034b226cea5c1b30eb4f6a6f313e4dadcbb0ece4/badge_github.png?raw=true"
+[<img src="assets/badges/google-play.png"
+    alt="Get it on Google Play"
+    height="80">](https://play.google.com/store/apps/details?id=gg.prinz.gebaerden)
+[<img src="assets/badges/github.png"
     alt="Get it on GitHub"
     height="80">](https://github.com/DoPri/gebaerden/releases/latest)
-[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/b1c8ac6f2ab08497189721a788a5763e28ff64cd/assets/graphics/badge_obtainium.png"
+[<img src="assets/badges/obtainium.png"
     alt="Get it on Obtainium"
     height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium%3A%2F%2Fapp%2F%257B%2522id%2522%253A%2522gg.prinz.gebaerden%2522%252C%2522url%2522%253A%2522https%253A%252F%252Fgithub.com%252FDoPri%252Fgebaerden%2522%252C%2522author%2522%253A%2522DoPri%2522%252C%2522name%2522%253A%2522DGS%2520Lernen%2522%252C%2522preferredApkIndex%2522%253A0%252C%2522additionalSettings%2522%253A%2522%257B%255C%2522includePrereleases%255C%2522%253Afalse%252C%255C%2522fallbackToOlderReleases%255C%2522%253Atrue%252C%255C%2522autoApkFilterByArch%255C%2522%253Atrue%252C%255C%2522versionDetection%255C%2522%253Atrue%257D%2522%257D)
 
