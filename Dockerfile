@@ -6,7 +6,7 @@ ARG MISE_SHA256=cfe49784ec9683b38510846958cfecd9b59da84d4e8a38d18ffda19dc2941ead
 # The web build is the same bytes for every architecture. Only amd64 is
 # published, and this keeps the compiler off an emulated runner if another
 # platform is ever added, where only the nginx stage below is per platform.
-FROM --platform=$BUILDPLATFORM debian:13-slim@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132 AS sdk
+FROM --platform=$BUILDPLATFORM debian:13-slim@sha256:a99cfc517144bc59b1978475ec53b46ecabec7e43635402ee5b77cc54cd1b20a AS sdk
 
 ARG MISE_VERSION
 ARG MISE_SHA256
@@ -62,7 +62,7 @@ RUN find build/web -type f \
 		-o -name '*.wasm' -o -name '*.svg' \) \
 		-size +1k -exec gzip -9 -k -f {} +
 
-FROM nginxinc/nginx-unprivileged:1.31.4-alpine@sha256:901e944d1f4fc2bd077e8f5568b98c1f6f8cdacf6b97a87747c43134a339b9a7 AS runtime
+FROM nginxinc/nginx-unprivileged:1.31.6-alpine@sha256:6a23acdfca2b9cfbcec61419e3f1426bcbedb91362f2f19306a8567423bb4612 AS runtime
 
 LABEL org.opencontainers.image.title="DGS Lernen" \
 	  org.opencontainers.image.description="Deutsche Gebärdensprache lernen mit Videos von SignDict." \
